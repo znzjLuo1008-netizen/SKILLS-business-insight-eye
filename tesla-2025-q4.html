@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tesla TSLA · 2025 Q4 深度拆解</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+/* Chart containers */
+.chart-wrap{position:relative;width:100%;margin:16px 0;background:var(--bg);border-radius:12px;padding:16px 14px 12px}
+canvas{height:260px!important}
+canvas.chart-pie{height:auto!important;max-height:280px;aspect-ratio:1/1}
+canvas.chart-gauge{height:128px!important;width:200px!important}
+.chart-wrap canvas{width:100%!important;height:260px!important;display:block}
+.chart-title{font-size:.75rem;font-weight:700;color:var(--t);margin-bottom:10px;padding-left:4px}
+.chart-subtitle{font-size:.62rem;color:var(--t3);margin-top:2px;font-weight:400}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+
+/* Treemap 矩形树图 */
+.treemap{display:grid;grid-template-columns:1.2fr 1fr;gap:3px;border-radius:14px;overflow:hidden;min-height:420px;margin:16px 0;font-family:Inter,'Noto Sans SC',sans-serif}
+.tm-cell{position:relative;display:flex;flex-direction:column;justify-content:flex-start;padding:12px 14px;transition:filter .2s,transform .2s;cursor:default;overflow:visible}
+.tm-cell:hover{filter:brightness(.92);z-index:1}
+.tm-label{font-size:.72rem;font-weight:700;color:rgba(0,0,0,.7);margin-bottom:2px;line-height:1.2}
+.tm-val{font-size:1.1rem;font-weight:800;color:rgba(0,0,0,.55);line-height:1.3}
+.tm-pct{font-size:.6rem;font-weight:600;color:rgba(0,0,0,.35);margin-top:2px}
+.tm-cell.sm .tm-label{font-size:.62rem}
+.tm-cell.sm .tm-val{font-size:.78rem}
+.tm-cell.sm .tm-pct{font-size:.52rem}
+.tm-cell.sm{min-height:80px;padding:10px 12px}
+/* 左侧：资产 */
+.tm-assets{display:grid;grid-template-rows:1fr auto;gap:3px}
+.tm-assets-main{display:grid;grid-template-columns:1fr;gap:3px}
+.tm-assets-bottom{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px}
+/* 右侧：负债+权益 */
+.tm-liab{display:grid;grid-template-rows:auto 1fr;gap:3px}
+.tm-liab-top{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+/* Treemap header */
+.tm-header{font-size:.75rem;font-weight:700;padding:8px 14px;display:flex;align-items:center;gap:6px}
+/* Colors */
+.tm-c-purple{background:rgba(88,86,214,.12)}
+.tm-c-purple-d{background:rgba(88,86,214,.18)}
+.tm-c-blue{background:rgba(0,122,255,.1)}
+.tm-c-green{background:rgba(52,199,89,.1)}
+.tm-c-green-d{background:rgba(52,199,89,.15)}
+.tm-c-amber{background:rgba(255,149,0,.1)}
+.tm-c-amber-d{background:rgba(255,149,0,.15)}
+.tm-c-pink{background:rgba(175,82,222,.12)}
+.tm-c-gray{background:rgba(174,174,178,.15)}
+.tm-c-lavender{background:rgba(175,82,222,.1)}
+
+
+/* Funnel 利润漏斗（梯形） */
+.funnel{display:flex;flex-direction:column;align-items:center;gap:0;width:100%;max-width:480px;margin:0 auto}
+.funnel-row{display:grid;grid-template-columns:72px 1fr;align-items:center;width:100%}
+.funnel-label{font-size:.68rem;font-weight:600;color:var(--t2);text-align:right;padding-right:8px}
+.funnel-bar{position:relative;display:flex;align-items:center;justify-content:center;height:52px;color:var(--t);font-weight:700;font-size:.82rem;text-align:center;line-height:1.3;transition:filter .2s;margin:0 auto}
+.funnel-bar:hover{filter:brightness(.85)}
+.funnel-bar .fb-val{position:relative;z-index:1;text-align:center}
+.funnel-bar .fb-label{display:none}
+.funnel-bar .fb-pct{font-size:.6rem;font-weight:500;opacity:.8}
+/* 梯形用 clip-path，每层不同宽度 */
+.fn-lv0{width:100%;background:rgba(88,86,214,.55);clip-path:polygon(0 0,100% 0,95% 100%,5% 100%);border-radius:8px 8px 0 0}
+.fn-lv1{width:82%;background:rgba(88,86,214,.4);clip-path:polygon(3% 0,97% 0,93% 100%,7% 100%)}
+.fn-lv2{width:62%;background:rgba(88,86,214,.3);clip-path:polygon(4% 0,96% 0,91% 100%,9% 100%)}
+.fn-lv3{width:48%;background:rgba(88,86,214,.22);clip-path:polygon(5% 0,95% 0,89% 100%,11% 100%)}
+.fn-lv4{width:34%;background:rgba(88,86,214,.14);clip-path:polygon(6% 0,94% 0,85% 100%,15% 100%);border-radius:0 0 8px 8px;color:var(--t)}
+.funnel-connector{width:2px;height:6px;background:rgba(88,86,214,.2);margin:0 auto}
+.funnel-conn-row{display:grid;grid-template-columns:72px 1fr;width:100%}
+.funnel-conn-row .funnel-connector{grid-column:2}
+/* Sankey Diagram 桑基图 */
+.sankey{position:relative;width:100%;padding:10px 0;margin:16px 0;overflow:visible}
+.sankey-cols{display:flex;justify-content:space-between;position:relative;min-height:420px}
+.sankey-col{display:flex;flex-direction:column;gap:5px;z-index:2;width:23%}
+.sankey-col.mid{width:18%}
+.sk-node{position:relative;border-radius:10px;padding:10px 10px;font-size:.68rem;font-weight:600;color:var(--t);display:flex;flex-direction:column;justify-content:center;transition:transform .2s,box-shadow .2s;cursor:default;border:1px solid transparent}
+.sk-node:hover{transform:scale(1.04);box-shadow:0 6px 20px rgba(0,0,0,.08);z-index:5}
+.sk-val{font-size:1.05rem;font-weight:800;margin-top:3px;letter-spacing:-.02em;color:#1d1d1f}
+.sk-pct{font-size:.6rem;color:var(--t3);margin-top:2px;font-weight:500}
+.sk-node.c-purple .sk-val,.sk-node.c-purple-l .sk-val,.sk-node.c-purple-ll .sk-val{color:#4a48c7}
+.sk-node.c-green .sk-val,.sk-node.c-green-l .sk-val{color:#1a7a33}
+.sk-node.c-pink .sk-val{color:#8a3ab0}
+.sk-node.c-amber .sk-val{color:#b35c00}
+.sk-node.c-blue .sk-val{color:#005ec4}
+.sk-node.c-red .sk-val{color:#cc2d25}
+.sk-node.c-teal .sk-val{color:#1a7a7a}
+.sk-node.c-dark .sk-val{color:#48484a}
+.sk-node.c-purple{background:var(--acl);border-color:rgba(88,86,214,.12)}.sk-node.c-purple-l{background:rgba(88,86,214,.1);border-color:rgba(88,86,214,.08)}.sk-node.c-purple-ll{background:rgba(88,86,214,.06);border-color:rgba(88,86,214,.06)}
+.sk-node.c-green{background:var(--gnl);border-color:rgba(52,199,89,.12)}.sk-node.c-green-l{background:rgba(52,199,89,.1);border-color:rgba(52,199,89,.08)}
+.sk-node.c-pink{background:var(--pkl);border-color:rgba(175,82,222,.12)}.sk-node.c-amber{background:var(--aml);border-color:rgba(255,149,0,.12)}.sk-node.c-blue{background:var(--bll);border-color:rgba(0,122,255,.12)}
+.sk-node.c-red{background:var(--rdl);border-color:rgba(255,59,48,.12)}.sk-node.c-teal{background:rgba(48,176,199,.08);border-color:rgba(48,176,199,.08)}.sk-node.c-dark{background:rgba(174,174,178,.08);border-color:rgba(174,174,178,.08)}
+.sankey-svg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.sankey-svg path{transition:fill-opacity .3s}
+:root{--bg:#f5f5f7;--wh:#fff;--b:#e8e8ed;--b2:#ececf0;--t:#1d1d1f;--t2:#6e6e73;--t3:#aeaeb2;--ac:#6c63ff;--acl:#f0eeff;--act:#5a52e0;--gn:#2db84b;--gnl:#eafaf0;--gnt:#1a7a33;--rd:#ff453a;--rdl:#fff1ef;--bl:#0a84ff;--bll:#e8f2ff;--am:#ff9f0a;--aml:#fff5e6;--pk:#bf5af2;--pkl:#f7edfe;--sh:0 2px 8px rgba(0,0,0,.04);--shm:0 8px 32px rgba(0,0,0,.06);--shl:0 16px 48px rgba(0,0,0,.08);--r:16px;--r-sm:10px;--r-lg:20px}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:clamp(14px,1.05vw,15.5px);scroll-behavior:smooth}
+body{font-family:Inter,'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;-webkit-font-smoothing:antialiased}
+::selection{background:var(--ac);color:#fff}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,245,247,.8);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-bottom:1px solid rgba(0,0,0,.06)}
+.nav-in{max-width:960px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:48px}
+.nav-brand{font-weight:800;font-size:.85rem;color:var(--ac)}
+.nav-btns{display:flex;gap:6px}
+.nbtn{font-size:.62rem;font-weight:600;padding:7px 16px;border-radius:99px;border:1px solid var(--b);background:var(--wh);color:var(--t2);cursor:pointer;transition:all .2s ease;box-shadow:var(--sh)}
+.nbtn:hover{border-color:var(--ac);color:var(--ac);box-shadow:var(--shm);transform:translateY(-1px)}
+.nbtn-f{background:var(--ac);color:#fff;border-color:var(--ac);box-shadow:0 4px 12px rgba(108,99,255,.25)}
+.nbtn-f:hover{background:var(--act);border-color:var(--act);box-shadow:0 6px 20px rgba(108,99,255,.35)}
+
+/* Main */
+.main{max-width:960px;margin:0 auto;padding:0 24px 80px}
+
+/* Hero */
+.hero{padding:48px 0 32px;border-bottom:1px solid var(--b2);margin-bottom:28px}
+.hero-eyebrow{font-size:.7rem;font-weight:600;color:var(--t3);margin-bottom:6px;letter-spacing:.04em}
+.hero h1{font-size:2.6rem;font-weight:900;letter-spacing:-.04em;line-height:1.08;margin-bottom:14px;background:linear-gradient(135deg,#1d1d1f 0%,#6c63ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:.62rem;font-weight:600;padding:5px 12px;border-radius:99px;border:1px solid var(--b);color:var(--t2);background:var(--wh);box-shadow:var(--sh);transition:all .2s}
+
+/* Score grid */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.sc{background:var(--wh);border:1px solid var(--b);border-radius:var(--r);padding:18px 14px;text-align:center;cursor:pointer;transition:all .25s ease;position:relative;overflow:hidden;box-shadow:var(--sh)}
+.sc:hover{border-color:transparent;box-shadow:var(--shm);transform:translateY(-3px)}
+.sc-l{font-size:.6rem;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.sc-v{font-size:1.4rem;font-weight:800;letter-spacing:-.02em}
+.sc-n{font-size:.6rem;font-weight:600;margin-top:3px}
+.sc-tip{display:none}
+/* Score tooltip: shows on hover BELOW score grid in #stip */
+.stip{display:none;background:var(--wh);border:1px solid var(--b);border-radius:10px;padding:16px 20px;margin:0 0 20px;box-shadow:var(--shm);font-size:.82rem;line-height:1.65;color:var(--t2);word-wrap:break-word;overflow-wrap:break-word}
+.stip:empty{display:none!important;padding:0;margin:0;border:none}
+.stip.on{display:block}
+.stip b{color:var(--t)}
+.stip .tp-pro{font-size:.75rem;font-weight:700;color:var(--ac);margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.stip .tp-pro::before{content:'📖';font-size:.72rem}
+.stip .tp-def{font-size:.8rem;color:var(--t);line-height:1.65;margin-bottom:10px}
+.stip .tp-ez{font-size:.78rem;color:var(--t2);line-height:1.7;padding:12px 16px;background:linear-gradient(135deg,#fef9f0,#f0eeff);border-radius:var(--r-sm)}
+.stip .tp-ez::before{content:'💡 大白话：';font-weight:700;color:var(--am)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Colors */
+.cr{color:var(--rd)}.cg{color:var(--gn)}.ca{color:var(--ac)}.cb{color:var(--bl)}.cam{color:var(--am)}.cpk{color:var(--pk)}
+
+/* Sections */
+.sec{background:var(--wh);border:1px solid var(--b);border-radius:var(--r-lg);margin-bottom:18px;overflow:hidden;box-shadow:var(--sh);transition:box-shadow .3s}
+.sec-h{padding:18px 22px 14px;border-bottom:1px solid var(--b2);display:flex;align-items:center;gap:12px}
+.sec-ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;flex-shrink:0}
+.sec-t{font-size:.92rem;font-weight:700;letter-spacing:-.01em}
+.sec-s{font-size:.68rem;color:var(--t3);margin-top:1px}
+.sec-b{padding:18px 22px 22px;font-size:.84rem;color:var(--t2);line-height:1.6}
+.sec-b strong{color:var(--t)}
+
+/* Metric cards */
+.mc{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}
+.mc-i{background:var(--bg);border-radius:8px;padding:12px;text-align:center}
+.mc-v{font-size:1.15rem;font-weight:800;letter-spacing:-.02em}
+.mc-l{font-size:.6rem;color:var(--t3);margin-top:2px}
+
+/* Revenue bars */
+.rb{margin:12px 0 14px}
+.rb-r{display:grid;grid-template-columns:120px 1fr 62px;gap:10px;align-items:center;margin-bottom:6px}
+.rb-la{font-size:.72rem;text-align:right;color:var(--t2)}
+.rb-tr{height:26px;background:var(--bg);border-radius:8px;overflow:hidden}
+.rb-fl{height:100%;border-radius:8px;display:flex;align-items:center;padding-left:8px;font-size:.58rem;font-weight:600;color:var(--t);white-space:nowrap;min-width:fit-content}
+.rb-gr{font-size:.72rem;font-weight:700;text-align:right}
+
+/* Agent box */
+.ag{border-left:3px solid var(--b);border-radius:0 var(--r-sm) var(--r-sm) 0;background:var(--bg);padding:14px 18px;margin-top:16px;transition:all .2s}
+.ag-n{font-size:.72rem;font-weight:700;margin-bottom:4px}
+.ag-t{font-size:.78rem;color:var(--t2);line-height:1.6}
+.ag-t em{color:var(--t3);font-style:italic}
+
+/* Tags */
+.tg{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.6rem;font-weight:600;margin:3px 2px;transition:all .15s}
+.tg-gn{background:rgba(45,184,75,.08);color:rgba(45,184,75,.7)}.tg-am{background:rgba(255,159,10,.08);color:rgba(180,120,0,.7)}.tg-rd{background:rgba(255,69,58,.08);color:rgba(200,50,40,.7)}.tg-bl{background:var(--bll);color:#005ec4}.tg-pk{background:var(--pkl);color:#7d30a0}
+
+/* Funnel bars */
+.fn{margin:12px 0}
+.fn-b{border-radius:5px;padding:5px 10px;margin:3px 0;font-size:.68rem;font-weight:600;color:var(--t)}
+
+/* Grade table */
+.gt{width:100%;border-collapse:collapse;font-size:.78rem}
+.gt th,.gt td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--b2)}
+.gt th{font-size:.65rem;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.04em}
+.gt tr:last-child td{border:none}
+.gt td:first-child{font-weight:600}
+.gd{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.68rem;font-weight:700}
+.gd-a{background:var(--gnl);color:var(--gnt)}.gd-b{background:var(--aml);color:#8a5500}.gd-c{background:var(--rdl);color:#cc2f26}
+
+/* Posts */
+.po{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.po-i{background:var(--bg);border-radius:var(--r-sm);padding:14px 16px;transition:all .2s;border:1px solid transparent}
+.po-i:hover{background:var(--wh);border-color:var(--b);box-shadow:var(--shm);transform:translateY(-2px)}
+.po-s{font-size:.6rem;font-weight:600;color:var(--ac);margin-bottom:3px}
+.po-t{font-size:.72rem;color:var(--t2);line-height:1.5}
+.po-t strong{color:var(--t)}
+.po-a{display:block;font-size:.6rem;color:var(--bl);text-decoration:none;margin-top:5px;font-weight:500}
+.po-a:hover{text-decoration:underline}
+.po-fw{grid-column:1/-1}
+
+/* Term tooltip */
+.term{position:relative;border-bottom:1.5px dashed var(--ac);color:var(--t);cursor:help;font-weight:600;display:inline}
+.term:hover{color:var(--ac)}
+.term-tip{display:none;opacity:0;position:fixed;width:320px;max-width:90vw;background:var(--wh);border:1px solid var(--b);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shl);z-index:9999;pointer-events:none;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;text-align:left;font-weight:400}
+.term-tip *{display:block}
+.term:hover .term-tip{display:block;opacity:1;pointer-events:auto}
+.term-tip .tp-pro{font-size:.73rem;font-weight:700;color:var(--ac);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.term-tip .tp-pro::before{content:'📖';font-size:.72rem}
+.term-tip .tp-def{font-size:.76rem;color:var(--t);line-height:1.65;margin-bottom:10px;font-weight:400}
+.term-tip .tp-ez{font-size:.74rem;color:var(--t2);line-height:1.65;padding:10px 14px;background:linear-gradient(135deg,#fef9f0,var(--acl));border-radius:var(--r-sm);font-weight:400}
+.term-tip .tp-ez::before{content:'💡 大白话：';font-weight:700;color:var(--am)}
+
+/* Footer bar */
+.fb{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 20px;background:var(--wh);border:1px solid var(--b);border-radius:12px;margin:20px 0 0}
+.fb-t{font-size:.75rem;color:var(--t2)}
+.fb-t a{color:var(--ac);text-decoration:none;font-weight:600}
+.fb-t a:hover{text-decoration:underline}
+.fb-b{display:flex;gap:6px}
+
+.footer{text-align:center;padding:32px 16px;font-size:.62rem;color:var(--t3)}
+.ibtn{font:.65rem/1 Inter,sans-serif;font-weight:600;padding:7px 16px;border-radius:99px;border:1px solid var(--b);background:var(--wh);color:var(--t2);cursor:pointer;transition:.15s}
+.ibtn:hover{border-color:var(--ac);color:var(--ac)}
+
+/* Two-col helper */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Responsive */
+@media(max-width:640px){
+  body{font-size:13px}
+  .wrap{padding:16px 14px}
+  /* 终章全屏适配 */
+  .verdict-fullpage{margin:0 -14px;padding:40px 14px 32px}
+  .verdict-divider{padding:20px 12px!important}
+  /* Hero */
+  .hero h1{font-size:1.5rem}
+  .hero-eyebrow{font-size:.62rem}
+  .hero-tags .htag{font-size:.58rem;padding:3px 8px}
+  .nav-btns .nbtn:first-child{display:none}
+  /* Score grid */
+  .sg{grid-template-columns:repeat(2,1fr);gap:8px}
+  .sc{padding:12px 10px}
+  .sc-v{font-size:1.3rem}
+  .sc-l{font-size:.58rem}
+  .stip{padding:12px 14px;font-size:.76rem}
+  /* Section headers */
+  .sec{margin:16px 0;padding:18px 14px}
+  .sec-h{gap:10px}
+  .sec-ico{width:38px;height:38px;font-size:.95rem}
+  .sec-t{font-size:1rem}
+  .sec-s{font-size:.62rem}
+  /* Revenue breakdown */
+  .rb-r{grid-template-columns:70px 1fr 36px;gap:6px}
+  .rb-la{font-size:.6rem}
+  .rb-gr{font-size:.58rem}
+  .rb-fl{font-size:.6rem;padding:6px}
+  /* Charts */
+  .chart-row{grid-template-columns:1fr!important;gap:14px}
+  .chart-wrap{padding:14px 12px}
+  .chart-title{font-size:.78rem}
+  .chart-subtitle{font-size:.56rem}
+  canvas{height:220px!important}
+  /* Sankey */
+  .sankey-cols{flex-direction:column;gap:10px;min-height:auto}
+  .sankey-col{width:100%!important;gap:6px}
+  .sankey-svg{display:none}
+  .sk-node{padding:8px 10px;border-radius:8px}
+  .sk-name{font-size:.65rem}
+  .sk-val{font-size:.88rem}
+  .sk-pct{font-size:.52rem}
+  /* Treemap */
+  .treemap{grid-template-columns:1fr;height:auto;min-height:auto}
+  .tm-assets-bottom{grid-template-columns:1fr 1fr}
+  .tm-cell{padding:10px 12px}
+  .tm-cell.sm{min-height:65px;padding:8px 10px}
+  .tm-val{font-size:.88rem}
+  .tm-label{font-size:.62rem}
+  /* Funnel */
+  .funnel{max-width:100%}
+  .funnel-label{width:55px;font-size:.58rem;padding-right:6px}
+  .funnel-bar{height:40px;font-size:.64rem}
+  .funnel-connector{height:6px;width:2px}
+  .fb-val{font-size:.64rem}
+  .fb-pct{font-size:.52rem}
+  /* Gauge + Risk bars */
+  .gauge-wrap{grid-template-columns:1fr;justify-items:center;gap:16px}
+  .gauge-left{width:100%;max-width:240px}
+  .gauge-box{margin:0 auto}
+  .hbar-wrap{width:100%}
+  .hbar-item{grid-template-columns:90px 1fr 30px;gap:4px;margin-bottom:6px}
+  .hbar-label{font-size:.62rem}
+  .hbar-track{height:24px}
+  .hbar-fill{font-size:.58rem}
+  .hbar-val{font-size:.62rem}
+  /* Moat radar */
+  .two{grid-template-columns:1fr}
+  /* Final section charts */
+  .final-charts{grid-template-columns:1fr}
+  /* Agent quotes */
+  .ag{padding:10px 12px;margin:12px 0;font-size:.76rem}
+  .ag-n{font-size:.7rem}
+  /* Tags */
+  .tg{font-size:.6rem;padding:2px 7px}
+  /* Grade table */
+  .gt{font-size:.68rem}
+  .gt th,.gt td{padding:6px 8px}
+  .gd{font-size:.62rem;padding:2px 8px}
+  /* Tooltips */
+  .term-tip{width:280px;max-width:85vw;padding:10px 12px;font-size:.72rem}
+  .tp-pro{font-size:.6rem}
+  .tp-def{font-size:.68rem}
+  .tp-ez{font-size:.66rem;padding:6px 8px}
+  /* Market comments */
+  .mc{grid-template-columns:1fr}
+  .mc-c{padding:12px}
+  /* Footer nav */
+  .po{grid-template-columns:1fr}
+  .fb{flex-direction:column;gap:8px}
+  .fb .ibtn{font-size:.6rem;padding:6px 12px}
+  /* Investment advice divider */
+  .verdict-divider{margin:32px 0 24px!important;padding:24px 12px!important}
+  .verdict-divider span[style*="font-size:.8rem"]{font-size:.68rem!important;letter-spacing:.08em!important}
+  .verdict-divider span[style*="font-size:1.2rem"]{font-size:1rem!important}
+  /* Investment advice section */
+  #investment-advice{border-radius:18px!important;margin:0 -2px!important}
+  #investment-advice .sec-h{padding:18px 16px 14px!important}
+  #investment-advice .sec-ico{width:36px!important;height:36px!important;font-size:1.1rem!important;border-radius:10px!important}
+  #investment-advice .sec-t{font-size:1rem!important}
+  #investment-advice .sec-b{padding:16px 14px 18px!important}
+  #investment-advice .sec-b>div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr!important}
+  #investment-advice .sec-b>div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+  #investment-advice table{font-size:.64rem}
+  #investment-advice table th,#investment-advice table td{padding:5px 6px}
+}
+
+/* Extra small phones */
+@media(max-width:380px){
+  .sg{grid-template-columns:1fr}
+  .sc-v{font-size:1.1rem}
+  .hero h1{font-size:1.3rem}
+  .rb-r{grid-template-columns:60px 1fr 32px}
+  .tm-assets-bottom{grid-template-columns:1fr}
+  .hbar-item{grid-template-columns:70px 1fr 26px}
+  canvas{height:180px!important}
+}
+/* Medium screens: 双列 → 单列回退 */
+@media(max-width:900px){
+  .verdict-fullpage{margin:0 -20px;padding:48px 20px 40px}
+}
+@media print{.nav,.fb{display:none!important}body{background:#fff}.sec{break-inside:avoid;box-shadow:none}}
+
+/* Gauge meter */
+.gauge-wrap{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start;margin:16px 0}
+.gauge-left{display:flex;flex-direction:column;align-items:center}
+.gauge-box{position:relative;width:200px;height:128px;margin:0 auto}
+.gauge-box canvas{display:block;width:200px!important;height:128px!important}
+.gauge-center{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap}
+.gauge-score{font-size:1.6rem;font-weight:900;letter-spacing:-.04em;color:var(--t);line-height:1}
+.gauge-score span{font-size:.75rem;font-weight:600;color:var(--t3)}
+.gauge-label{font-size:.58rem;color:var(--t3);margin-top:2px}
+.gauge-title{text-align:center;font-size:.78rem;font-weight:700;margin-bottom:6px}
+.gauge-title .gi{margin-right:4px}
+
+/* Horizontal risk bars */
+.hbar-wrap{min-width:0}
+.hbar-title{font-size:.82rem;font-weight:700;margin-bottom:12px}
+.hbar-title .gi{margin-right:4px}
+.hbar-item{display:grid;grid-template-columns:110px 1fr 36px;gap:8px;align-items:center;margin-bottom:8px}
+.hbar-label{font-size:.72rem;color:var(--t2);text-align:right;font-weight:500}
+.hbar-track{height:28px;background:var(--bg);border-radius:6px;overflow:hidden;position:relative}
+.hbar-fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:.65rem;font-weight:700;color:#fff;transition:width .6s ease}
+.hbar-val{font-size:.72rem;font-weight:700;text-align:right}
+
+/* Score radar in 综合评定 */
+.final-charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+
+/* ====== 终章全屏沉浸 ====== */
+.verdict-fullpage{position:relative;margin:0 -24px;padding:60px 24px 48px;background:linear-gradient(180deg,#f0eeff 0%,#f5f7ff 30%,#fff 60%);border-top:3px solid transparent;border-image:linear-gradient(90deg,transparent,var(--ac),#2db84b,var(--ac),transparent) 1}
+.verdict-fullpage::before{content:'';position:absolute;top:0;left:0;right:0;height:200px;background:radial-gradient(ellipse at 50% 0%,rgba(108,99,255,.06) 0%,transparent 70%);pointer-events:none}
+
+</style>
+</head>
+<body>
+
+<nav class="nav"><div class="nav-in">
+  <div class="nav-brand">小罗test-商业透视眼🔍</div>
+  <div class="nav-btns">
+    <button class="nbtn" onclick="window.print()">保存 PDF</button>
+    <button class="nbtn nbtn-f" id="cpBtn" onclick="doCopy()">复制摘要</button>
+  </div>
+</div></nav>
+
+<div class="main">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-eyebrow" data-i18n="hero-eye">TSLA · NASDAQ · 2025 Q4 · 2026.01.29 发布</div>
+  <h1 data-i18n="hero-title">2025 Q4 Tesla 财报分析</h1>
+  <div class="hero-pills">
+    <span class="pill" data-i18n="pill1">8 维度拆解</span>
+    <span class="pill" data-i18n="pill2">5 位大师 Agent</span>
+    <span class="pill" data-i18n="pill3">10+ 市场声音</span>
+  </div>
+</div>
+
+
+
+<!-- Scores (hover to explain) -->
+<div class="sg" id="sgrid">
+  <div class="sc">
+    <div class="sc-l" data-i18n="sc-rev">Q4 营收</div><div class="sc-v ca">$25.7B</div><div class="sc-n cr">↑ 2%</div>
+    <div class="sc-tip"><div class="tp-pro">全年营收 (Revenue)</div><div class="tp-def">Tesla 2025 Q4 营收 $25.7B，同比增长 2%。汽车业务贡献 77%，储能业务增长迅猛达 $3.1B，同比 +113%。</div><div class="tp-ez">Tesla 2025年全年营收约 $101.5B，Q4 单季度 $25.7B，同比增长 2%。虽然增速放缓，但储能和服务业务增长强劲，收入多元化持续推进。</div></div>
+  </div>
+  <div class="sc">
+    <div class="sc-l" data-i18n="sc-profit"><span class="term">GAAP<span class="term-tip"><div class="tp-pro">GAAP — Generally Accepted Accounting Principles</div><div class="tp-def">美国<b>通用会计准则</b>，是 SEC 要求所有上市公司必须遵循的财务报告标准。GAAP 净利润包含所有一次性项目（如税务调整、资产减值），因此可能与实际经营表现有较大差异。</div><div class="tp-ez">就是"官方版本"的利润数字——所有收入开支都按最严格的规则算。有时候一笔大额税务调整就能让利润暴涨或暴跌，看着吓人但不代表公司真实经营变了。</div></span></span> 净利润</div><div class="sc-v" style="color:var(--am)">$2.3B</div><div class="sc-n" style="color:var(--rd)">↓ 71%</div>
+    <div class="sc-tip"><div class="tp-pro">归母净利润 (Net Profit Attributable to Shareholders)</div><div class="tp-def">Q4 GAAP 净利润 $2.3B，同比下降 71%，主因 2024 Q4 有 $5.9B 一次性递延税资产确认。剔除后调整 EPS $0.73，同比增长 3%。</div><div class="tp-ez">账面利润暴跌 71% 看着吓人，但其实去年有笔 $5.9B 的"纸面税务收益"，去掉这个影响，实际经营利润反而小幅增长。</div></div>
+  </div>
+  <div class="sc">
+    <div class="sc-l">毛利率</div><div class="sc-v" style="color:var(--am)">19.8%</div><div class="sc-n cr">↑ 1.7pp</div>
+    <div class="sc-tip"><div class="tp-pro">毛利率 (Gross Margin)</div><div class="tp-def">毛利率 = (营收 - 营业成本) / 营收 × 100%。衡量公司每赚 1 元钱中扣掉<b>直接成本</b>后还剩多少。Tesla Q4 毛利率 19.8%，同比提升 1.3pp。汽车业务毛利率 16.3%（含积分），储能业务毛利率约 25%，整体结构改善。</div><div class="tp-ez">卖 100 块东西，成本约 80 块，毛赚 19.8 块。虽然比不上纯软件公司，但在硬件制造业中已是顶级水平。储能业务拉高了整体毛利。</div></div>
+  </div>
+  <div class="sc">
+    <div class="sc-l">净利率 (GAAP)</div><div class="sc-v cb">9.0%</div><div class="sc-n">承压回升</div>
+    <div class="sc-tip"><div class="tp-pro">净利率 GAAP (Net Margin)</div><div class="tp-def">GAAP 净利率是按美国会计准则计算的<b>净利润与营收之比</b>。Tesla Q4 GAAP 净利率约 9.0%，剔除一次性项目后调整净利率约 10.5%。</div><div class="tp-ez">Tesla 每赚 100 块，扣掉所有成本后到手约 9 块。在车企里算中等偏上，但比 2022 年的 15.2% 已经腰斩——价格战是主因。</div></div>
+  </div>
+  <div class="sc">
+    <div class="sc-l">ROE</div><div class="sc-v" style="color:var(--am)">9.7%</div><div class="sc-n">低于巴菲特线</div>
+    <div class="sc-tip"><div class="tp-pro">ROE — 净资产收益率 (Return on Equity)</div><div class="tp-def">ROE = 净利润 / 股东权益 × 100%。衡量<b>股东投入每 1 块钱能赚多少</b>。巴菲特长期持有标准是 ROE 连续 5 年 &gt; 15%（"巴菲特线"）。Tesla TTM ROE 约 10.3%，低于巴菲特线 15%。主因净利率下滑和大量资本开支。</div><div class="tp-ez">你投了 100 块当股东，Tesla 一年赚 10.3 块还给你。巴菲特要 15% 以上才看得上，Tesla 暂时没达标——但 Elon 把钱砸进了 AI 和 Optimus，赌的是未来。</div></div>
+  </div>
+  <div class="sc">
+    <div class="sc-l">FCF</div><div class="sc-v cg">$2.0B</div><div class="sc-n cr">↑ 33%</div>
+    <div class="sc-tip"><div class="tp-pro">自由现金流 (Free Cash Flow, FCF)</div><div class="tp-def">FCF = 经营活动现金流 - 资本支出。代表企业在维持正常经营后<b>真正能自由支配的现金</b>，可用于分红、回购、并购或储蓄。$2.0B FCF 在利润承压下保持增长，表明利润含金量极高。</div><div class="tp-ez">就是公司赚了钱、交完房租水电（日常开支）、买完新设备后，口袋里真正剩下的"活钱"。$2.0B 季度 FCF 增长 33%，说明 Tesla 赚的是真金白银，不是靠会计手法堆出来的纸面利润。</div></div>
+  </div>
+  <div class="sc">
+    <div class="sc-l">资产负债率</div><div class="sc-v cg">38.7%</div><div class="sc-n">净现金</div>
+    <div class="sc-tip"><div class="tp-pro">资产负债率 (Debt-to-Asset Ratio)</div><div class="tp-def">资产负债率 = 总负债 / 总资产 × 100%。衡量公司<b>有多少家产是靠借钱撑起来的</b>。国际通行标准：&lt; 60% 为安全。38.7% 且处于<b>净现金状态</b>（现金储备 &gt; 有息负债），说明财务极度稳健。</div><div class="tp-ez">Tesla 家底很厚——手握 $36.6B 现金，比欠别人的还多。造车是重资产生意，能做到净现金非常难得。</div></div>
+  </div>
+  <div class="sc">
+    <div class="sc-l">Q4交付量</div><div class="sc-v ca">495,570<span style="font-size:.55em;font-weight:500">辆</span></div><div class="sc-n cr">↑ 2%</div>
+    <div class="sc-tip"><div class="tp-pro">Q4 交付量 (Quarterly Deliveries)</div><div class="tp-def">Q4 全球交付 495,570 辆，同比增长 2%。其中 Model Y 约占 60%，Cybertruck 持续爬坡。全年累计交付约 179 万辆。</div><div class="tp-ez">一个季度交付 49.6 万辆车，虽然增速放缓到 2%，但已是全球最大的纯电车企。Cybertruck 产能爬坡中，新一代低价车型 2025 年下半年量产。</div></div>
+  </div>
+</div>
+<div class="stip" id="stip"></div>
+
+<!-- 动态报告区域（API返回后会替换此区域内容） -->
+<div id="reportArea">
+
+
+<!-- DIM 1 -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--acl);color:var(--ac);">1</div><div><div class="sec-t">钱从哪来 — 商业模式拆解</div><div class="sec-s">营收结构 · 业务线贡献</div></div></div>
+  <div class="sec-b">
+    <p style="margin-bottom:10px;">Tesla 的收入来自 <strong>3 大引擎</strong>：汽车销售（含 <span class="term">FSD<span class="term-tip"><div class="tp-pro">FSD — Full Self-Driving（全自动驾驶）</div><div class="tp-def">Tesla 的<b>高级驾驶辅助系统</b>，售价 $8,000 或 $99/月订阅。基于纯视觉 AI 方案，通过 OTA 持续升级。目前为 L2+ 级别，正向 L4 无人驾驶演进。FSD 订阅是 Tesla 毛利率最高的业务之一。</div><div class="tp-ez">就是 Tesla 的"自动驾驶"软件——车自己能开、变道、停车。现在还需要人监督，但每次更新都比上次聪明一点。买一次 8000 美元，或者每月付 99 美元租用。</div></span></span> 软件）、储能与发电、服务与其他。Q4 交付 495,570 辆，储能部署 11.0 GWh 创新高。</p>
+    <div class="rb">
+      <!-- Automotive 板块 -->
+      <div style="background:rgba(88,86,214,.04);border:1px solid rgba(88,86,214,.1);border-radius:12px;padding:10px 12px;margin-bottom:8px;">
+        <div class="rb-r"><div class="rb-la"><strong style="color:var(--ac)">🚗 Automotive Revenue</strong></div><div class="rb-tr"><div class="rb-fl" style="width:77%;background:rgba(88,86,214,.2);">$19.8B (77%)</div></div><div class="rb-gr" style="color:var(--rd)">-8%</div></div>
+        <div style="margin-left:16px;border-left:2px solid rgba(88,86,214,.15);padding-left:8px;">
+          <div class="rb-r"><div class="rb-la" style="color:var(--t3);font-size:.68rem">🏭 车辆直销</div><div class="rb-tr"><div class="rb-fl" style="width:81%;background:rgba(88,86,214,.15);">$16.1B</div></div><div class="rb-gr" style="color:var(--rd)">-11%</div></div>
+          <div class="rb-r"><div class="rb-la" style="color:var(--t3);font-size:.68rem">🤖 FSD & Leasing</div><div class="rb-tr"><div class="rb-fl" style="width:19%;background:rgba(88,86,214,.12);">$3.7B</div></div><div class="rb-gr cr" style="font-weight:800;white-space:nowrap">+52% 🔥</div></div>
+          <div class="rb-r"><div class="rb-la" style="color:var(--t3);font-size:.68rem">🌿 碳积分</div><div class="rb-tr"><div class="rb-fl" style="width:3%;background:rgba(88,86,214,.1);">$595M</div></div><div class="rb-gr cr">+46%</div></div>
+        </div>
+      </div>
+      <!-- Energy 板块 -->
+      <div style="background:rgba(52,199,89,.04);border:1px solid rgba(52,199,89,.1);border-radius:12px;padding:10px 12px;margin-bottom:8px;">
+        <div class="rb-r"><div class="rb-la"><strong style="color:var(--gn)">⚡ Energy Gen & Storage</strong></div><div class="rb-tr"><div class="rb-fl" style="width:12%;background:rgba(52,199,89,.18);">$3.1B (12%)</div></div><div class="rb-gr cr" style="font-weight:800;white-space:nowrap">+113% 🔥</div></div>
+      </div>
+      <!-- Services 板块 -->
+      <div style="background:rgba(255,107,157,.04);border:1px solid rgba(255,107,157,.1);border-radius:12px;padding:10px 12px;">
+        <div class="rb-r"><div class="rb-la"><strong style="color:var(--pk)">🔧 Services & Other</strong></div><div class="rb-tr"><div class="rb-fl" style="width:11%;background:rgba(255,107,157,.16);">$2.8B (11%)</div></div><div class="rb-gr cr">+31%</div></div>
+      </div>
+    </div>
+    <span class="tg tg-gn">储能收入同比 +113%</span> <span class="tg tg-gn">FSD 渗透率加速</span> <span class="tg tg-gn">Megapack 工厂全面投产</span>
+    <!-- 📊 Charts: 营收结构 + 近5年趋势 -->
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title">2025 Q4 营收结构 <span class="chart-subtitle">按业务板块</span></div>
+        <canvas id="chartRevPie" class="chart-pie"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">近 5 年业务线收入构成 <span class="chart-subtitle">堆叠柱状图 · 单位：$M</span></div>
+        <canvas id="chartRevStack"></canvas>
+      </div>
+    </div>
+
+    <!-- 📊 桑基图：收入流向 -->
+    <div class="chart-title" style="margin-top:20px">🌊 收入桑基图 <span class="chart-subtitle">资金从哪来 → 业务板块 → 到哪去 · 2025</span></div>
+    <div class="sankey" id="sankeyBox">
+      <svg class="sankey-svg" id="sankeySvg"></svg>
+      <div class="sankey-cols">
+        <!-- 左列：收入来源 -->
+        <div class="sankey-col" id="skLeft">
+          <div class="sk-node c-purple" id="skL0" style="flex:19806">
+            汽车销售<div class="sk-val">$19.8B</div><div class="sk-pct">77.1%</div>
+          </div>
+          <div class="sk-node c-green" id="skL1" style="flex:3060">
+            储能 & 发电<div class="sk-val">$3.1B</div><div class="sk-pct">11.9%</div>
+          </div>
+          <div class="sk-node c-pink" id="skL2" style="flex:2753">
+            服务 & 其他<div class="sk-val">$2.8B</div><div class="sk-pct">10.7%</div>
+          </div>
+          <div class="sk-node c-blue" id="skL3" style="flex:595">
+            碳积分<div class="sk-val">$595M</div><div class="sk-pct">2.3%</div>
+          </div>
+        </div>
+
+        <!-- 中列：业务板块 -->
+        <div class="sankey-col mid" id="skMid">
+          <div class="sk-node c-purple-l" id="skM0" style="flex:16100">
+            🚗 汽车直销<div class="sk-val">$16.1B</div>
+          </div>
+          <div class="sk-node c-purple-ll" id="skM1" style="flex:3700">
+            🤖 FSD & Leasing<div class="sk-val">$3.7B</div>
+          </div>
+          <div class="sk-node c-green-l" id="skM2" style="flex:3060">
+            🔋 Megapack & Solar<div class="sk-val">$3.1B</div>
+          </div>
+          <div class="sk-node c-teal" id="skM3" style="flex:2753">
+            🔧 服务 & 配件<div class="sk-val">$2.8B</div>
+          </div>
+          <div class="sk-node c-pink" id="skM4" style="flex:595">
+            📜 碳积分<div class="sk-val">$595M</div>
+          </div>
+        </div>
+
+        <!-- 右列：去向 -->
+        <div class="sankey-col" id="skRight">
+          <div class="sk-node c-amber" id="skR0" style="flex:20606">
+            🏭 营业成本 (<span class="term">COGS<span class="term-tip"><div class="tp-pro">COGS — Cost of Goods Sold（营业成本）</div><div class="tp-def">生产和交付产品所产生的<b>直接成本</b>，包括原材料（锂电池、钢材）、工厂人工、制造费用等。Tesla Q4 COGS $20.6B，占营收 80.2%。</div><div class="tp-ez">造一辆车要花多少钱——电池、钢材、工人工资、电费……加在一起就是营业成本。每赚 100 块有 80 块花在造车上。</div></span></span>)<div class="sk-val">$20.6B</div><div class="sk-pct">80.2%</div>
+          </div>
+          <div class="sk-node c-blue" id="skR1" style="flex:1184">
+            🔬 研发 (R&D)<div class="sk-val">$1.2B</div><div class="sk-pct">4.6%</div>
+          </div>
+          <div class="sk-node c-teal" id="skR2" style="flex:1296">
+            📣 SGA 费用<div class="sk-val">$1.3B</div><div class="sk-pct">5.0%</div>
+          </div>
+          <div class="sk-node c-green" id="skR3" style="flex:2317">
+            💰 净利润<div class="sk-val">$2.3B</div><div class="sk-pct">9.0%</div>
+          </div>
+          <div class="sk-node c-red" id="skR4" style="flex:305">
+            📉 税费 & 其他<div class="sk-val">$305M</div><div class="sk-pct">1.2%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ag" style="border-left-color:var(--ac);"><div class="ag-n" style="color:var(--ac);">🧓 巴菲特 Agent</div><div class="ag-t">Tesla 是<strong>全球唯一实现规模化盈利的纯电车企，更是<span class="term">垂直整合型企业<span class="term-tip"><div class="tp-pro">Vertical Integration Model</div><div class="tp-def">从原材料到终端消费者，<b>全链条自主掌控</b>的商业模式。Tesla 自产电池、自建工厂、自营销售和充电网络，最大化控制成本和体验。</div><div class="tp-ez">就像自己种棉花、织布、做衣服、开门店——从头到尾都是自己干。Tesla 从矿石到电池到整车到充电桩到保险，全部自己来，中间环节没有人赚差价。</div></span></span></strong>。垂直整合从电池到软件的全产业链，同时变现汽车销售 + FSD 软件 + 储能 + 碳积分四大收入流。<em>"只投你真正理解的生意——Tesla 从制造到能源的闭环，是我见过最独特的商业模式。"</em></div></div>
+  </div>
+</div>
+
+<!-- DIM 2 -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--gnl);color:var(--gn);">2</div><div><div class="sec-t">长得好不好 — 增长质量</div><div class="sec-s">量价拆分 · Megapack 增长引擎 · 可持续性</div></div></div>
+  <div class="sec-b">
+    <div class="mc">
+      <div class="mc-i"><div class="mc-v" style="color:var(--am)">+2%</div><div class="mc-l"><span class="term">营收增速<span class="term-tip"><div class="tp-pro">Revenue Growth Rate</div><div class="tp-def">本年营收相比去年的<b>百分比变化</b>，衡量公司规模扩张的速度。2025 全年同比约 +4%，Q4 +2%，增速放缓但储能 +113% 成第二引擎。</div><div class="tp-ez">增速从高速转为平稳，但 Megapack 储能和 FSD 软件收入的高增长正在重塑增长结构。</div></span></span> (2024:+8%)</div></div>
+      <div class="mc-i"><div class="mc-v" style="color:var(--rd)">-71%</div><div class="mc-l">GAAP 净利 (含一次性项)</div></div>
+      <div class="mc-i"><div class="mc-v cg">18.2→18.5→19.8%</div><div class="mc-l">毛利率连续 3Q 回升</div></div>
+      <div class="mc-i"><div class="mc-v cg">+33%</div><div class="mc-l"><span class="term">FCF 自由现金流<span class="term-tip"><div class="tp-pro">FCF — Free Cash Flow</div><div class="tp-def">经营活动现金流 - 资本开支 = <b>自由现金流</b>，代表公司"真正可自由支配的现金"。Tesla Q4 FCF $2.0B，同比 +33%，说明现金创造能力持续改善。</div><div class="tp-ez">净利润可能有纸面水分，但自由现金流是真金白银——$2.0B FCF 说明 Tesla 不仅账面赚钱，银行卡里也确实到账了。</div></span></span>增速</div></div>
+    </div>
+    <span class="tg tg-gn"><span class="term" style="border-bottom-color:var(--gnt);color:var(--gnt)">毛利率触底回升<span class="term-tip"><div class="tp-pro">Gross Margin Recovery</div><div class="tp-def">Tesla 汽车毛利率从 2023 Q4 的 17.2% 回升至 2025 Q4 的 19.8%（含碳积分），触底反弹信号明显。<b>一体化压铸降本 + 车型组合优化 + 碳积分贡献</b>三因素驱动。</div><div class="tp-ez">毛利率是"卖一台车赚多少"——之前因为价格战越打越低，现在终于止跌回升了，说明降本措施开始见效。</div></span></span></span> <span class="tg tg-gn"><span class="term" style="border-bottom-color:var(--gnt);color:var(--gnt)">Megapack 增长引擎<span class="term-tip"><div class="tp-pro">Energy Storage Growth Engine</div><div class="tp-def">储能业务 Megapack 2025 Q4 收入 $3.06B，同比 <b>+113%</b>，已成为 Tesla 第二增长曲线。毛利率约 25%，高于汽车业务，正在改善整体盈利结构。</div><div class="tp-ez">Megapack 就是特斯拉的"新摇钱树"——给电网存电的大电池柜，一年翻一倍多。利润比卖车还厚，是未来最大的增长点之一。</div></span></span>显著</span> <span class="tg tg-gn">FSD 软件收入加速</span>
+    <!-- 📊 Charts: 增长质量 -->
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title">近 5 年营收 vs 净利润 <span class="chart-subtitle">单位：$M</span></div>
+        <canvas id="chartRevProfit"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">近 5 年毛利率趋势 <span class="chart-subtitle">价格战后触底回升</span></div>
+        <canvas id="chartGrossMargin"></canvas>
+      </div>
+    </div>
+    <div class="ag" style="border-left-color:var(--gn);"><div class="ag-n" style="color:var(--gn);">📐 格雷厄姆 Agent</div><div class="ag-t">Q4 增长表面放缓但内核改善：① 汽车毛利率从 Q3 的 17.1% 回升至 19.8%（含碳积分）② 储能业务 Megapack 同比 +113% 成为第二增长曲线 ③ FSD 累计行驶里程突破 30 亿英里，软件收入占比提升。<em>"GAAP 净利暴跌 71% 是幻象——去年 Q4 有 $5.9B 一次性递延税资产。剔除后，调整 <span class="term">EPS<span class="term-tip"><div class="tp-pro">EPS — Earnings Per Share（每股收益）</div><div class="tp-def">净利润 / 总股数。衡量<b>每一股股票对应多少利润</b>。调整 EPS（Adjusted EPS）剔除了一次性项目（如税务调整、资产减值），更能反映公司真实经营能力。</div><div class="tp-ez">公司赚的钱平分到每一股上——每股赚 0.73 美元。"调整后"的意思是去掉了那些不会每年都发生的特殊收支，看真实赚钱水平。</div></span></span> $0.73 同比 +3%。"</em></div></div>
+  </div>
+</div>
+
+<!-- DIM 3 -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--aml);color:var(--am);">3</div><div><div class="sec-t">产品硬不硬 — 竞争力反推</div><div class="sec-s">毛利率 · ROE 杜邦拆解 · 研发投入</div></div></div>
+  <div class="sec-b">
+    <div class="mc">
+      <div class="mc-i"><div class="mc-v" style="color:var(--am)">19.8%</div><div class="mc-l">毛利率（含碳积分）· <span class="term">定价权<span class="term-tip"><div class="tp-pro">Pricing Power</div><div class="tp-def">Tesla 通过<b>一体化压铸、4680 电池、超级工厂规模化</b>持续降低单车成本。Q4 COGS 同比下降 3%。</div><div class="tp-ez">就是"涨价了客人还愿意买"——Tesla 靠品牌力和技术领先维持定价权——虽然降价促销，但单车利润仍优于多数对手。</div></span></span>极强</div></div>
+      <div class="mc-i"><div class="mc-v" style="color:var(--am)">10.3%</div><div class="mc-l"><span class="term">ROE<span class="term-tip"><div class="tp-pro">ROE — Return on Equity</div><div class="tp-def">净利润 / 股东权益 × 100%。衡量股东每投入 1 元钱，公司能赚回多少。>15% 且持续 5 年以上被巴菲特视为优秀企业的标志（"巴菲特线"）。</div><div class="tp-ez">你投 100 块当股东，公司帮你赚 10.3 块。巴菲特说 15 分以上才及格，Tesla 这次只考了 10.3 分——低于巴菲特线，主要是利润率被价格战拖累了。</div></span></span> · 低于巴菲特线</div></div>
+      <div class="mc-i"><div class="mc-v ca">$4.6B</div><div class="mc-l"><span class="term">研发投入 (FY)<span class="term-tip"><div class="tp-pro">R&D Expenditure</div><div class="tp-def">公司投入<b>技术研究与产品开发</b>的费用，占营收 11.4%。高研发投入是科技公司维持长期竞争力的关键——但也意味着短期利润被压缩。</div><div class="tp-ez">每赚 100 块就拿 11.4 块去搞研发（FSD 自动驾驶、Optimus 机器人、4680 电池等）。就像种树——现在花钱培育，未来才能结果子。</div></span></span> · 占营收 11.4%</div></div>
+      <div class="mc-i"><div class="mc-v cb">$82万/年</div><div class="mc-l"><span class="term">人均创收<span class="term-tip"><div class="tp-pro">Revenue per Employee</div><div class="tp-def">总营收 / 员工人数，反映<b>人效</b>。约 $18.4万/年意味着 Tesla 每个员工平均每年为公司创造约 18.4 万美元收入（~140,000 名员工）。</div><div class="tp-ez">每个 Tesla 员工平均一年帮公司赚 18.4 万美元——制造业人效本来就比纯互联网低，Tesla 这个水平在车企里算不错的。</div></span></span> · ~140,000 人</div></div>
+    </div>
+    <p><span class="term">杜邦拆解<span class="term-tip"><div class="tp-pro">DuPont Analysis</div><div class="tp-def">将 ROE 拆解为<b>三个驱动因子</b>的分析方法：ROE = 净利率 × 资产周转率 × 权益乘数。可以看出公司的高 ROE 究竟靠什么驱动——是利润高？是资产运转快？还是借了很多钱？</div><div class="tp-ez">就像体检报告——不光告诉你"身体好"，还拆开看心脏好不好、肝功能怎样、骨密度如何。Tesla 的 ROE 因净利率下滑而承压，需要靠周转率和新业务放量来恢复。</div></span></span> ROE 10.3% = <span class="term">净利率<span class="term-tip"><div class="tp-pro">Net Profit Margin</div><div class="tp-def">净利润 / 营收 × 100%，衡量每 1 元收入中<b>最终到手</b>多少。~7.3% 说明利润率受价格战挤压。</div><div class="tp-ez">赚 100 块到手 7.3 块——制造业利润本来就比互联网薄，Tesla 还在打价格战拼份额。</div></span></span>(~7.3%) × <span class="term">资产周转率<span class="term-tip"><div class="tp-pro">Asset Turnover Ratio</div><div class="tp-def">营收 / 总资产，衡量公司<b>用资产创造收入的效率</b>。0.64x 意味着每 1 元资产每年产生 0.64 元收入。制造业重资产属性导致周转率偏低。</div><div class="tp-ez">就像一个工厂每年能"翻"多少次钱——0.64 在制造业算正常，因为盖超级工厂要花大钱。</div></span></span>(~0.64x) × <span class="term">杠杆<span class="term-tip"><div class="tp-pro">Financial Leverage / Equity Multiplier</div><div class="tp-def">总资产 / 股东权益，也叫权益乘数。2.20x 意味着每 1 元自有资金撬动了 2.20 元资产。<b>越高意味着借钱越多</b>，风险也越大。</div><div class="tp-ez">你有 100 万自己的钱，又借了 120 万，总共用 220 万做生意——这个杠杆率适中，不算冒险。Tesla 的负债多为经营性负债和产能扩张贷款。</div></span></span>(~2.20x) → 周转率尚可，但净利率受价格战挤压，杠杆适中。</p>
+    <!-- 📊 Charts: 盈利能力 + ROE 趋势 -->
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title">近 5 年 ROE 趋势 <span class="chart-subtitle">巴菲特线 15%</span></div>
+        <canvas id="chartROE"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">近 5 年净利率 & 毛利率 <span class="chart-subtitle">利润率承压后企稳</span></div>
+        <canvas id="chartMargins"></canvas>
+      </div>
+    </div>
+    <div class="ag" style="border-left-color:var(--am);"><div class="ag-n" style="color:var(--am);">🧐 芒格 Agent</div><div class="ag-t">19.8% 毛利率在车企中偏低（BYD ~22%，Toyota ~20%，法拉利 ~50%），但 Tesla 的核心壁垒在于<strong>软件变现能力</strong>——FSD 软件包利润率接近 80%，Megapack 毛利率 >25%，这些将逐步拉高整体盈利。<em>"好的公司，在困难时期会变得更好。"</em></div></div>
+  </div>
+</div>
+
+<!-- DIM 4 -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--pkl);color:var(--pk);">4</div><div><div class="sec-t">地盘稳不稳 — 护城河评估</div><div class="sec-s">五大壁垒类型 · 竞争优势持久性</div></div></div>
+  <div class="sec-b">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.78rem;margin-bottom:10px;">
+      <div>🔹 <span class="term">品牌力<span class="term-tip"><div class="tp-pro">Brand Power</div><div class="tp-def">"Tesla"品牌在全球消费者心中=<b>科技+环保+未来</b>。强品牌带来溢价定价权和用户忠诚度，新竞争者难以短时间建立同等认知。2025 年 Tesla 仍是全球电动车品牌搜索量 No.1。</div><div class="tp-ez">"Tesla"三个字本身就值钱——代表最酷的电动车。别的品牌说"我比 Tesla 好"，大多数人不信也不想试。品牌就是最深的护城河之一。</div></span></span> <span class="tg tg-gn">★★★★★</span></div>
+      <div>🔹 <span class="term">规模制造<span class="term-tip"><div class="tp-pro">Scale Manufacturing</div><div class="tp-def">Tesla 拥有 6 座超级工厂（Fremont/上海/柏林/德州/墨西哥/内华达），年产能超 <b>230 万辆</b>。一体化压铸+自动化产线使单车成本持续下降，规模越大成本优势越明显。</div><div class="tp-ez">工厂建好后产 10 万辆和 50 万辆，固定成本差不多，但收入差 5 倍。Tesla 的超级工厂 24 小时不停转，产量越大越赚钱。</div></span></span> <span class="tg tg-gn">★★★★★</span></div>
+      <div>🔹 <span class="term">充电网络<span class="term-tip"><div class="tp-pro">Supercharger Network</div><div class="tp-def">Tesla 在全球运营 <b>6 万+</b> 个 Supercharger 充电桩，覆盖北美/欧洲/中国主要城市和高速公路。NACS 标准已被 Ford/GM/Rivian 等采用，正在成为<b>行业充电标准</b>。</div><div class="tp-ez">开 Tesla 到处都能充电，而且充得最快。现在连福特、通用都用 Tesla 的充电口标准了——相当于 Tesla 一家定义了行业规则，护城河极深。</div></span></span> <span class="tg tg-gn">★★★★</span></div>
+      <div>🔹 <span class="term">技术领先<span class="term-tip"><div class="tp-pro">Technology Leadership</div><div class="tp-def">Tesla 在 FSD 自动驾驶、4680 电池、一体化压铸、Dojo 超算等<b>核心技术上领先行业 2-3 年</b>。累计 <b>30 亿+英里</b> FSD 训练数据形成 AI 飞轮，竞争对手难以追赶。</div><div class="tp-ez">就像苹果的芯片领先安卓阵营——Tesla 的自动驾驶数据量远超所有对手加起来的总和，数据越多 AI 越聪明，越聪明数据越多，这个飞轮别人追不上。</div></span></span> <span class="tg tg-gn">★★★★</span></div>
+      <div>🔹 <span class="term">成本优势<span class="term-tip"><div class="tp-pro">Cost Advantage / Manufacturing Moat</div><div class="tp-def">通过<b>一体化压铸、4680 电池自产、超级工厂规模化</b>等技术手段持续降低单车制造成本。Tesla 单车成本约 $36,000，远低于多数竞品。</div><div class="tp-ez">Tesla 建了全球最高效的造车工厂——机器人 24 小时不停转，一个大铸件替代几十个零件，电池自己造。成本越低，价格战就越打得起。</div></span></span> <span class="tg tg-am">★★★</span></div>
+    </div>
+    <!-- 📊 Chart: 护城河雷达图 + 竞品对比 -->
+    <div class="chart-row">
+      <div class="chart-wrap" style="max-width:100%">
+        <div class="chart-title" style="text-align:center">护城河五维评分 <span class="chart-subtitle">满分 5 星</span></div>
+        <canvas id="chartMoat"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">护城河 vs 竞品 <span class="chart-subtitle">Tesla / Toyota / BYD</span></div>
+        <canvas id="chartMoatCompare"></canvas>
+      </div>
+    </div>
+    <div class="ag" style="border-left-color:var(--pk);"><div class="ag-n" style="color:var(--pk);">🧓 巴菲特 Agent</div><div class="ag-t"><strong><span class="term">护城河<span class="term-tip"><div class="tp-pro">Economic Moat</div><div class="tp-def">巴菲特提出的概念，指企业拥有的<b>持久竞争优势</b>，能阻止竞争对手侵蚀其利润。包括网络效应、转换成本、品牌、规模优势、专利/牌照等五大类型。</div><div class="tp-ez">想象公司是一座城堡，护城河就是围着城堡的那条河——河越宽越深，敌人（竞争对手）就越难打进来。Tesla 的护城河是品牌 + Supercharger 网络 + FSD 数据飞轮——三条河叠在一起。</div></span></span>评分 88/100 — 强壁垒。</strong>品牌号召力 + 全球 6万+ Supercharger + 数十亿英里 FSD 训练数据 = 竞争对手难以复制。但毛利率 17.9% 说明价格战正在侵蚀盈利。<em>"没有护城河的城堡终将被攻破。"</em></div></div>
+  </div>
+</div>
+
+<!-- DIM 5 -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:#fce8f0;color:#d14778;">5</div><div><div class="sec-t">赚到手没 — 利润漏斗 & 现金流</div><div class="sec-s">从营收到净利润层层漏了多少</div></div></div>
+  <div class="sec-b">
+    <div class="fn">
+      <div class="fn-b" style="width:100%;background:rgba(88,86,214,.2);">营收 $25.7B (100%)</div>
+      <div class="fn-b" style="width:19.8%;background:rgba(52,199,89,.2);"><span class="term" style="border-bottom-color:var(--gnt);color:var(--gnt)">毛利<span class="term-tip"><div class="tp-pro">Gross Profit</div><div class="tp-def">营收减去<b>营业成本</b>（直接成本如原材料、电池、制造人工等）后的利润。$5.1B 意味着 19.8% 的毛利率。</div><div class="tp-ez">卖了 100 块的车，扣掉电池、钢材、工厂人工等成本，还剩 19.8 块——这就是毛利。虽然不算高，但在车企里已经不错了。</div></span></span> $5.1B (19.8%)</div>
+      <div class="fn-b" style="width:6.2%;background:rgba(0,122,255,.15);min-width:180px"><span class="term" style="border-bottom-color:var(--act);color:var(--act)">Op Income<span class="term-tip"><div class="tp-pro">Operating Profit</div><div class="tp-def">毛利减去<b>运营费用</b>（研发、销售、管理费用）后的利润。反映公司核心业务赚钱能力，不包含投资和融资活动。</div><div class="tp-ez">毛利再扣掉员工工资、销售费用、办公租金后剩下的——纯粹看"主业赚不赚钱"。</div></span></span> $1.6B (6.2%)</div>
+      <div class="fn-b" style="width:34.5%;background:rgba(52,199,89,.12);">净利润 $2.3B (9.0%)</div>
+    </div>
+    <span class="tg tg-gn"><span class="term" style="border-bottom-color:var(--gnt);color:var(--gnt)">自由现金流<span class="term-tip"><div class="tp-pro">Free Cash Flow (FCF)</div><div class="tp-def">经营活动现金流减去资本支出。代表企业<b>真正可自由支配的现金</b>——可以分红、回购股票、投资新业务或存起来。</div><div class="tp-ez">赚来的钱交完房租水电、买完新设备后，口袋里真正剩下的"活钱"。$2.0B说明Tesla不只是账面上赚钱，是真的有这么多现金在手。</div></span></span> $2.0B +18%</span> <span class="tg tg-gn"><span class="term" style="border-bottom-color:var(--gnt);color:var(--gnt)">FCF Margin<span class="term-tip"><div class="tp-pro">FCF Margin（自由现金流率）</div><div class="tp-def">自由现金流 / 营收 × 100%。衡量企业将收入转化为<b>可自由支配现金</b>的效率。≥5% 为健康，Tesla 2025 年 FCF Margin 6.6%，说明每赚 100 美元有 6.6 美元变成了真金白银。</div><div class="tp-ez">卖了 100 块钱的车，扣掉所有成本和建厂开支后，口袋里真正多了 6.6 块——对于一家疯狂建厂的公司来说，这个效率已经相当不错了。</div></span></span>6.6%</span> <span class="tg tg-am"><span class="term" style="border-bottom-color:#8a5500;color:#8a5500">资本开支<span class="term-tip"><div class="tp-pro">Capital Expenditure (CapEx)</div><div class="tp-def">企业用于<b>购买或维护长期资产</b>（超级工厂、生产线、Dojo 超算等）的支出。$11.3B 全年 CapEx 主要用于产能扩张和 AI 算力建设。</div><div class="tp-ez">就像开工厂要买机器、建仓库——Tesla 花 $11.3B 建新工厂和 Dojo 超算。现在花钱是为了将来赚更多钱。</div></span></span> $11.3B（产能 + AI）</span>
+
+    <!-- 📊 利润漏斗（梯形） + FCF Margin趋势 + 净利润vs现金流 -->
+    <div class="chart-row" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="chart-wrap" style="padding-top:20px;padding-bottom:20px">
+        <div class="chart-title">🔽 利润漏斗（最新年度） <span class="chart-subtitle">从营收到自由现金流</span></div>
+        <div class="funnel">
+          <div class="funnel-row"><div class="funnel-label">营业收入</div><div class="funnel-bar fn-lv0"><div class="fb-label">营业收入</div><div class="fb-val">$25.7B<br><span class="fb-pct">100%</span></div></div></div>
+          <div class="funnel-conn-row"><div class="funnel-connector"></div></div>
+          <div class="funnel-row"><div class="funnel-label">毛利</div><div class="funnel-bar fn-lv1"><div class="fb-label">毛利</div><div class="fb-val">$5.1B<br><span class="fb-pct">19.8%</span></div></div></div>
+          <div class="funnel-conn-row"><div class="funnel-connector"></div></div>
+          <div class="funnel-row"><div class="funnel-label">Op Income</div><div class="funnel-bar fn-lv2"><div class="fb-label">Op Income</div><div class="fb-val">$1.6B<br><span class="fb-pct">6.2%</span></div></div></div>
+          <div class="funnel-conn-row"><div class="funnel-connector"></div></div>
+          <div class="funnel-row"><div class="funnel-label">Net Income</div><div class="funnel-bar fn-lv3"><div class="fb-label">Net Income</div><div class="fb-val">$2.3B<br><span class="fb-pct">9.0%</span></div></div></div>
+          <div class="funnel-conn-row"><div class="funnel-connector"></div></div>
+          <div class="funnel-row"><div class="funnel-label">自由现金流</div><div class="funnel-bar fn-lv4"><div class="fb-label">FCF</div><div class="fb-val">$2.0B<br><span class="fb-pct">24%</span></div></div></div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">📈 FCF Margin 趋势 <span class="chart-subtitle">自由现金流/营收 · 衡量现金转化效率</span></div>
+        <canvas id="chartCashRatio"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">净利润 vs 自由现金流 <span class="chart-subtitle">利润含金量</span></div>
+        <canvas id="chartProfitFCF"></canvas>
+      </div>
+    </div>
+    <div class="ag" style="border-left-color:#d14778;"><div class="ag-n" style="color:#d14778;">📐 格雷厄姆 Agent</div><div class="ag-t"><span class="term">利润漏斗<span class="term-tip"><div class="tp-pro">Profit Funnel</div><div class="tp-def">从营收到净利润的<b>逐层过滤过程</b>：营收 → 毛利 → 经营利润 → 净利润。每一层"漏掉"的部分就是各类成本和费用。漏斗越浅，说明成本控制越好。</div><div class="tp-ez">想象一个漏斗：最上面倒进去 100 块收入，经过层层过滤（成本、工资、税…），最后底下漏出来 9 块净利润——Tesla 的漏斗较深，成本开支大，但现金流表现好于账面。</div></span></span><strong>极浅</strong>——营收到净利漏掉 91%——利润率较薄。但自由现金流健康，说明实际经营质量好于 GAAP 数字。<em>"<span class="term">安全边际<span class="term-tip"><div class="tp-pro">Margin of Safety</div><div class="tp-def">格雷厄姆提出的核心概念：以<b>显著低于内在价值的价格</b>Buy资产，为可能的判断失误和不可预见的风险留出缓冲空间。</div><div class="tp-ez">买东西留点余地——一个值 100 块的东西，你用 70 块买到，即使判断有偏差也不会亏太惨。格雷厄姆说这是投资的第一原则。</div></span></span>不仅是价格的问题，更是利润质量的问题。"</em></div></div>
+  </div>
+</div>
+
+<!-- DIM 6 -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--bll);color:var(--bl);">6</div><div><div class="sec-t">家底厚不厚 — 资产负债表</div><div class="sec-s">负债率 · 流动性 · 现金储备</div></div></div>
+  <div class="sec-b">
+    <div class="mc">
+      <div class="mc-i"><div class="mc-v ca">$122.1B</div><div class="mc-l"><span class="term">总资产<span class="term-tip"><div class="tp-pro">Total Assets</div><div class="tp-def">企业拥有的<b>全部资源的账面价值</b>，包括现金、投资、设备、无形资产等。$122.1B = 1,221 亿美元。</div><div class="tp-ez">把公司所有值钱的东西加在一起——工厂、超充站、现金、设备等——总共值 1,221 亿美元。</div></span></span></div></div>
+      <div class="mc-i"><div class="mc-v cg">38.7%</div><div class="mc-l"><span class="term">负债率<span class="term-tip"><div class="tp-pro">Debt-to-Asset Ratio</div><div class="tp-def">总负债 / 总资产 × 100%。国际通行标准 < 60% 为安全。38.7% 说明Tesla<b>大部分家产是自己的</b>，而非靠借来的。</div><div class="tp-ez">家里 100 块的东西，只有 39 块是借来的——财务很稳健，不用担心"还不起债"。</div></span></span> (< 60% 安全)</div></div>
+      <div class="mc-i"><div class="mc-v cg">$30.7B</div><div class="mc-l"><span class="term">现金净额<span class="term-tip"><div class="tp-pro">Net Cash Position</div><div class="tp-def">现金及等价物 ($36.6B) 减去有息负债 (~$5.9B) 的差额。为正说明处于<b>净现金状态</b>——手握的现金比欠的债还多。</div><div class="tp-ez">把存折上所有钱加起来，再减去所有欠条——还剩 307 亿美元。通俗说就是"不但不欠钱，口袋里还有 300 多亿闲钱"。</div></span></span></div></div>
+    </div>
+    <span class="tg tg-gn"><span class="term" style="border-bottom-color:var(--gnt);color:var(--gnt)">净现金状态<span class="term-tip"><div class="tp-pro">Net Cash Position</div><div class="tp-def">企业持有的<b>现金 > 有息负债</b>的状态，意味着不依赖外部融资也能正常运营和扩张——是财务安全的最高评级之一。</div><div class="tp-ez">你口袋里的钱比欠别人的还多——想还随时能还清，还有剩。这种企业不怕经济不好时银行不借钱给它。</div></span></span></span> <span class="tg tg-gn">安全边际充裕</span>
+
+    <!-- 📊 Treemap: 资产负债表结构 -->
+    <div class="chart-title" style="margin-top:20px">📊 资产负债表结构全景 <span class="chart-subtitle">面积 ∝ 金额占比 · 2025 Q4</span></div>
+    <div class="treemap">
+      <!-- 左侧：资产 -->
+      <div class="tm-assets">
+        <div class="tm-assets-main">
+          <div class="tm-cell tm-c-purple" style="min-height:180px">
+            <div class="tm-header" style="padding:0 0 6px;color:var(--ac)">📦 总资产 · $122.1B</div>
+            <div class="tm-label">PP&E (Net)</div>
+            <div class="tm-val">$32.9B</div>
+            <div class="tm-pct">占总资产 26.9%</div>
+          </div>
+          <div class="tm-cell tm-c-purple-d">
+            <div class="tm-label">Operating Lease Vehicles</div>
+            <div class="tm-val">$6.1B</div>
+            <div class="tm-pct">5.0%</div>
+          </div>
+          <div class="tm-cell tm-c-blue">
+            <div class="tm-label">Goodwill & Intangibles</div>
+            <div class="tm-val">$1.1B</div>
+            <div class="tm-pct">0.9%</div>
+          </div>
+        </div>
+        <div class="tm-assets-bottom">
+          <div class="tm-cell sm tm-c-green" style="border-radius:0 0 0 14px">
+            <div class="tm-label">Cash & Short-term Invest</div>
+            <div class="tm-val">$36.6B</div>
+            <div class="tm-pct">30.0%</div>
+          </div>
+          <div class="tm-cell sm tm-c-green-d">
+            <div class="tm-label">Inventory</div>
+            <div class="tm-val">$14.4B</div>
+            <div class="tm-pct">11.8%</div>
+          </div>
+          <div class="tm-cell sm tm-c-pink">
+            <div class="tm-label">Receivables</div>
+            <div class="tm-val">$3.4B</div>
+            <div class="tm-pct">2.8%</div>
+          </div>
+          <div class="tm-cell sm tm-c-gray">
+            <div class="tm-label">Other Assets</div>
+            <div class="tm-val">$27.6B</div>
+            <div class="tm-pct">22.6%</div>
+          </div>
+        </div>
+      </div>
+      <!-- 右侧：负债 + 权益 -->
+      <div class="tm-liab">
+        <div class="tm-liab-top">
+          <div class="tm-cell tm-c-amber" style="min-height:100px">
+            <div class="tm-header" style="padding:0 0 6px;color:var(--am)">⚡ 总负债 · $47.3B</div>
+            <div class="tm-label">流动负债</div>
+            <div class="tm-val">$28.9B</div>
+            <div class="tm-pct">占总负债 61.1%</div>
+          </div>
+          <div class="tm-cell tm-c-amber-d" style="min-height:100px">
+            <div class="tm-label">非流动负债</div>
+            <div class="tm-val">$18.4B</div>
+            <div class="tm-pct">38.9%</div>
+          </div>
+        </div>
+        <div class="tm-cell tm-c-lavender" style="border-radius:0 0 14px 0">
+          <div class="tm-header" style="padding:0 0 6px;color:var(--pk)">🏛️ 股东权益 · $74.8B</div>
+          <div class="tm-label">归母权益</div>
+          <div class="tm-val">$72.9B</div>
+          <div class="tm-pct">占总权益 97.5%</div>
+          <div style="margin-top:10px">
+            <div class="tm-label">少数股东权益</div>
+            <div class="tm-val" style="font-size:.85rem">$1.9B</div>
+            <div class="tm-pct">2.5%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 📊 Charts: 资产负债 -->
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title">近 5 年资产负债率 <span class="chart-subtitle">安全线 60%</span></div>
+        <canvas id="chartDebtRatio"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">近 5 年总资产 & 负债 <span class="chart-subtitle">单位：$B</span></div>
+        <canvas id="chartBalance"></canvas>
+      </div>
+    </div>
+    <div class="ag" style="border-left-color:var(--bl);"><div class="ag-n" style="color:var(--bl);">📐 格雷厄姆 Agent</div><div class="ag-t">「堡垒级」<span class="term">资产负债表<span class="term-tip"><div class="tp-pro">Balance Sheet</div><div class="tp-def">三大财务报表之一，展示企业某一时点的<b>资产（拥有什么）、负债（欠什么）和股东权益（净值多少）</b>。资产 = 负债 + 股东权益。</div><div class="tp-ez">就像个人的财务体检单——左边是你有的（房子、存款、投资），右边是你欠的（房贷、信用卡），相减就是你真正的身家。</div></span></span>——38.7% 低负债 + $36.6B 现金。即使遭遇<span class="term">黑天鹅<span class="term-tip"><div class="tp-pro">Black Swan Event</div><div class="tp-def">由塔勒布提出的概念，指<b>极不可能发生但影响极大</b>的突发事件（如疫情、金融危机、地缘冲突等）。</div><div class="tp-ez">就是那种谁都没想到会发生的大事——比如突然来一场全球疫情。Tesla有足够多的现金，即使遇到这种极端情况也能扛住。</div></span></span>也有充足弹药。<em>"投资的第一条规则是不要赔钱。"</em></div></div>
+  </div>
+</div>
+
+<!-- DIM 7 -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--pkl);color:var(--pk);">7</div><div><div class="sec-t">老板靠谱吗 — 管理层信号</div><div class="sec-s">资本配置 · 战略判断 · 股东回报</div></div></div>
+  <div class="sec-b">
+    <!-- 正面+关注信号 紧凑排列 -->
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <div style="flex:1;background:rgba(45,184,75,.05);border:1px solid rgba(45,184,75,.1);border-radius:var(--r-sm);padding:12px 14px;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--gn);margin-bottom:6px">🟢 正面信号</div>
+        <div style="font-size:.76rem;line-height:1.9;color:var(--t2)">
+          AI/FSD 研发投入 $4.6B · 储能 Megapack +113%<br>
+          <b>储能</b> Megapack 收入 +113% · <b>FSD</b> v13 全球推送 · <b>交付</b> Q4 495K 辆创新高
+        </div>
+      </div>
+      <div style="flex:1;background:rgba(255,159,10,.04);border:1px solid rgba(255,159,10,.1);border-radius:var(--r-sm);padding:12px 14px;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--am);margin-bottom:6px">🟡 关注事项</div>
+        <div style="font-size:.76rem;line-height:1.9;color:var(--t2)">
+          Robotaxi 商业化时间表不明 · 利润率承压<br>
+          <span class="term">SBC<span class="term-tip"><div class="tp-pro">SBC — Stock-Based Compensation（股权激励）</div><div class="tp-def">公司向员工和高管发放的<b>股票期权或限制性股票</b>作为薪酬的一部分。SBC 不涉及现金支出，但会<b>稀释现有股东权益</b>。Tesla 2025 年 SBC 约 $1.8B。</div><div class="tp-ez">公司不发现金奖金，而是发股票给员工——员工开心了，但你手里的股票因为总量变多而变"薄"了。Tesla 一年发了 18 亿美元的股票奖励。</div></span></span> 股权激励 $1.8B 稀释股东 · 员工增至 14 万人
+        </div>
+      </div>
+    </div>
+    <!-- 图表紧跟 -->
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title">2025 Q4 资本配置 <span class="chart-subtitle">钱花在哪了</span></div>
+        <canvas id="chartCapAlloc" class="chart-pie"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">近 5 年股东回报 <span class="chart-subtitle">分红 + 回购（亿美元）</span></div>
+        <canvas id="chartShareholderReturn"></canvas>
+      </div>
+    </div>
+    <div class="ag" style="border-left-color:var(--pk);"><div class="ag-n" style="color:var(--pk);">🦉 费雪 Agent</div><div class="ag-t"><strong>评级 A-。</strong>All-in AI + 储能双轮驱动，Robotaxi 愿景宏大但烧钱凶猛——<span class="term">资本配置<span class="term-tip"><div class="tp-pro">Capital Allocation</div><div class="tp-def">管理层决定如何<b>分配公司赚到的钱</b>——是投入研发、收购其他公司、分红给股东、还是回购股票？这个决策直接决定公司未来的价值。</div><div class="tp-ez">赚了钱怎么花最划算？马斯克把大量现金投入 AI 训练集群和 Megafactory，愿景远大但短期回报不确定。</div></span></span>能力是顶级管理层标志。<em>"卓越的管理层会在别人恐惧时大胆投资——但投资者需要判断这是远见还是冒进。"</em></div></div>
+  </div>
+</div>
+
+<!-- DIM 8 -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--rdl);color:var(--rd);">8</div><div><div class="sec-t">会不会翻车 — 风险扫描</div><div class="sec-s">竞争 · Robotaxi 执行 · 估值 · 利润率 · 关键人依赖</div></div></div>
+  <div class="sec-b">
+    <!-- 风险摘要头部 -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px;background:var(--aml);border-radius:var(--r);border:1px solid rgba(255,149,0,.15);">
+      <div style="font-size:2rem;font-weight:900;color:var(--am);letter-spacing:-.04em;line-height:1">52</div>
+      <div style="flex:1">
+        <div style="font-size:.72rem;font-weight:700;color:var(--am)">综合风险评分 52/100 · 中等风险</div>
+        <div style="font-size:.62rem;color:var(--t2);margin-top:2px">加权评估 6 项风险因子，0=安全 100=危险</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+        <span class="tg tg-rd" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">高 · 竞争加剧<span class="term-tip"><div class="tp-pro">Competitive Intensity Risk</div><div class="tp-def">全球新能源车市场竞争白热化——BYD、小米等中国品牌快速崛起，价格战蔓延，Tesla 市场份额面临持续挤压。</div><div class="tp-ez">简单说：对手越来越多、越来越强，价格战打得厉害，Tesla 以前独占市场的好日子过去了。</div></span></span></span>
+        <span class="tg tg-am" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">高 · Robotaxi<span class="term-tip"><div class="tp-pro">Robotaxi Execution Risk</div><div class="tp-def">Elon Musk 承诺 2026 年 6 月 Robotaxi 落地，但<b>监管审批、技术成熟度和商业模式验证</b>均存在重大不确定性。此前 Robotaxi 已多次延期，市场信任度打折。</div><div class="tp-ez">马斯克说 Robotaxi 明年上路——但他以前也这么说过好几次都跳票了。这次能不能兑现直接决定 Tesla 股价走向。</div></span></span></span>
+        <span class="tg tg-am" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">中 · 估值泡沫<span class="term-tip"><div class="tp-pro">Valuation Bubble Risk</div><div class="tp-def">Tesla 当前 P/E ~162x，远超传统车企（Toyota ~10x）和科技巨头（Meta ~25x）。股价已包含 FSD/Robotaxi 的<b>极度乐观预期</b>，一旦进展不及预期，估值面临大幅回调。</div><div class="tp-ez">162 倍市盈率意味着——按现在的利润不吃不喝要赚 162 年才回本。股价已经把未来 5-10 年的美好故事都提前算进去了，万一故事打折，跌幅会很惨。</div></span></span></span>
+        <span class="tg tg-am" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">中 · 利润率<span class="term-tip"><div class="tp-pro">Margin Compression Risk</div><div class="tp-def">价格战叠加原材料成本波动，汽车毛利率从 2022 年的 28.5% 压缩至 17.9%。若竞争进一步加剧或新车型定价偏低，<b>利润率可能继续承压</b>。</div><div class="tp-ez">卖车越来越不赚钱——以前卖 100 赚 28，现在只赚 18。如果还要继续降价抢市场，利润会被压得更薄。</div></span></span></span>
+        <span class="tg tg-gn" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">低 · 关键人<span class="term-tip"><div class="tp-pro">Key Person Risk</div><div class="tp-def">Elon Musk 身兼 Tesla/SpaceX/xAI 等多家公司 CEO，精力分散、言行争议频发。Tesla 的品牌和战略高度依赖 Musk 个人——<b>如果 Musk 离开或丑闻加剧，股价可能剧烈波动</b>。</div><div class="tp-ez">Tesla 和 Musk 深度绑定——他发条推特股价就能涨跌 5%。这种"一个人就是整家公司"的风险在大公司里很罕见。</div></span></span></span>
+        <span class="tg tg-gn" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">低 · 财务<span class="term-tip"><div class="tp-pro">Financial Health Risk</div><div class="tp-def">Tesla 拥有 $36.6B 现金及等价物，资产负债率仅 38.7%，<b>财务状况极为健康</b>。即使遭遇经济衰退或行业寒冬，充裕的现金储备也能支撑多年。</div><div class="tp-ez">Tesla 兜里有 366 亿美金现金——这是"冬天来了也能安稳过冬"的底气。财务健康是 Tesla 的最大安全网。</div></span></span></span>
+      </div>
+    </div>
+    <!-- 风险评分条 -->
+    <div style="display:grid;grid-template-columns:76px 1fr 28px;gap:5px 8px;align-items:center;font-size:.68rem;">
+      <div style="text-align:right;font-weight:500;color:var(--t2)">竞争加剧</div><div class="hbar-track" style="height:22px"><div class="hbar-fill" style="width:75%;background:var(--rd);font-size:.6rem">75</div></div><div style="font-weight:700;color:var(--rd)">75</div>
+      <div style="text-align:right;font-weight:500;color:var(--t2)">Robotaxi</div><div class="hbar-track" style="height:22px"><div class="hbar-fill" style="width:65%;background:var(--am);font-size:.6rem">65</div></div><div style="font-weight:700;color:var(--am)">65</div>
+      <div style="text-align:right;font-weight:500;color:var(--t2)">估值泡沫</div><div class="hbar-track" style="height:22px"><div class="hbar-fill" style="width:60%;background:var(--am);font-size:.6rem">60</div></div><div style="font-weight:700;color:var(--am)">60</div>
+      <div style="text-align:right;font-weight:500;color:var(--t2)">利润率</div><div class="hbar-track" style="height:22px"><div class="hbar-fill" style="width:55%;background:var(--am);font-size:.6rem">55</div></div><div style="font-weight:700;color:var(--am)">55</div>
+      <div style="text-align:right;font-weight:500;color:var(--t2)">关键人风险</div><div class="hbar-track" style="height:22px"><div class="hbar-fill" style="width:40%;background:var(--gn);font-size:.6rem">40</div></div><div style="font-weight:700;color:var(--gn)">40</div>
+      <div style="text-align:right;font-weight:500;color:var(--t2)">财务健康</div><div class="hbar-track" style="height:22px"><div class="hbar-fill" style="width:15%;background:var(--gn);font-size:.6rem">15</div></div><div style="font-weight:700;color:var(--gn)">15</div>
+    </div>
+    <div class="ag" style="border-left-color:var(--rd);"><div class="ag-n" style="color:var(--rd);">🕵️ 风控 Agent</div><div class="ag-t"><strong>风险评分 52/100</strong> — 中等风险。最大隐患是竞争加剧导致的利润率下滑和 162x PE 的高估值。好消息：$36.6B 现金 + $2.0B FCF 提供安全垫。</div></div>
+  </div>
+</div>
+
+<!-- SCORE TABLE -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--acl);color:var(--ac);">★</div><div><div class="sec-t">综合评定</div><div class="sec-s">五位大师 Agent 共同判决</div></div></div>
+  <div class="sec-b">
+    <!-- 三卡片横排：左宽表格 + 中雷达 + 右柱状 -->
+    <div style="display:grid;grid-template-columns:minmax(260px,1.2fr) 1fr 1fr;gap:10px;margin-bottom:14px;">
+      <!-- 卡片1：评分表 -->
+      <div style="background:var(--bg);border-radius:12px;padding:14px 14px;">
+        <div style="font-size:.7rem;font-weight:700;color:var(--t);margin-bottom:8px">📋 8 维度评分</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.7rem;">
+          <tbody>
+            <tr style="border-bottom:1px solid var(--b2)"><td style="padding:5px 4px;font-weight:600;white-space:nowrap">钱从哪来</td><td style="padding:5px 6px;width:36px"><span class="gd gd-c" style="font-size:.62rem">C+</span></td><td style="padding:5px 4px;color:var(--t2);font-size:.62rem">Auto+Energy+FSD 三引擎</td></tr>
+            <tr style="border-bottom:1px solid var(--b2)"><td style="padding:5px 4px;font-weight:600;white-space:nowrap">增长质量</td><td style="padding:5px 6px"><span class="gd gd-c" style="font-size:.62rem">C+</span></td><td style="padding:5px 4px;color:var(--t2);font-size:.62rem">营收+2%，利润率承压</td></tr>
+            <tr style="border-bottom:1px solid var(--b2)"><td style="padding:5px 4px;font-weight:600;white-space:nowrap">竞争力</td><td style="padding:5px 6px"><span class="gd gd-c" style="font-size:.62rem">C</span></td><td style="padding:5px 4px;color:var(--t2);font-size:.62rem">17.9% 毛利 · 3.1% ROE</td></tr>
+            <tr style="border-bottom:1px solid var(--b2)"><td style="padding:5px 4px;font-weight:600;white-space:nowrap">护城河</td><td style="padding:5px 6px"><span class="gd gd-b" style="font-size:.62rem">B</span></td><td style="padding:5px 4px;color:var(--t2);font-size:.62rem">品牌+充电+FSD 技术壁垒</td></tr>
+            <tr style="border-bottom:1px solid var(--b2)"><td style="padding:5px 4px;font-weight:600;white-space:nowrap">现金流</td><td style="padding:5px 6px"><span class="gd gd-a" style="font-size:.62rem">A-</span></td><td style="padding:5px 4px;color:var(--t2);font-size:.62rem">FCF $6.2B · FCF Margin 6.6%</td></tr>
+            <tr style="border-bottom:1px solid var(--b2)"><td style="padding:5px 4px;font-weight:600;white-space:nowrap">资产负债</td><td style="padding:5px 6px"><span class="gd gd-a" style="font-size:.62rem">A</span></td><td style="padding:5px 4px;color:var(--t2);font-size:.62rem">38.7% 低负债 · $36.6B 现金</td></tr>
+            <tr style="border-bottom:1px solid var(--b2)"><td style="padding:5px 4px;font-weight:600;white-space:nowrap">管理层</td><td style="padding:5px 6px"><span class="gd gd-a" style="font-size:.62rem">A-</span></td><td style="padding:5px 4px;color:var(--t2);font-size:.62rem">All-in AI · 股东回报待观察</td></tr>
+            <tr><td style="padding:5px 4px;font-weight:600;white-space:nowrap">风险</td><td style="padding:5px 6px"><span class="gd gd-b" style="font-size:.62rem">B+</span></td><td style="padding:5px 4px;color:var(--t2);font-size:.62rem">竞争 + 高估值 + Robotaxi</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 卡片2：雷达图 -->
+      <div style="background:var(--bg);border-radius:12px;padding:14px 10px;display:flex;flex-direction:column;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--t);margin-bottom:4px;text-align:center">🕸️ 综合评分雷达</div>
+        <canvas id="chartFinalRadar" style="flex:1;max-height:260px"></canvas>
+      </div>
+      <!-- 卡片3：柱状图 -->
+      <div style="background:var(--bg);border-radius:var(--r);padding:14px 18px 14px 12px;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--t);margin-bottom:4px">📊 维度排名</div>
+        <canvas id="chartFinalBar" style="flex:1;max-height:260px;width:100%"></canvas>
+      </div>
+    </div>
+    <div class="ag" style="border-left-color:var(--ac);margin-top:14px;"><div class="ag-n" style="color:var(--ac);">🧓 巴菲特 Agent — 最终研判</div><div class="ag-t"><strong>Tesla 有卓越的品牌和技术壁垒，但当前估值令人不安。</strong>品牌力+Supercharger 网络+FSD 数据飞轮构成世界级护城河，$36.6B 现金提供安全垫。然而 <span class="term">P/E<span class="term-tip"><div class="tp-pro">Price-to-Earnings Ratio</div><div class="tp-def">股价 / 每股收益，衡量市场愿意为<b>公司每 1 美元利润</b>支付多少钱。Tesla 当前 ~162x 意味着市场给 Tesla 的定价是年利润的 162 倍——远高于 Meta(25x)、Google(22x)。</div><div class="tp-ez">就像买商铺——这个商铺每年赚 100 万，你要花 1.62 亿来买。隔壁 Meta 赚 100 万只要 2500 万。Tesla 的估值已经包含了大量未来乐观预期。</div></span></span> 约 162x，已透支未来数年的增长预期。利润率在价格战中从 2022 年的 16.8% 压缩至 6.2%，需等待 FSD/Robotaxi 变现来支撑当前估值。<em>"以合理价格买伟大公司——但当前价格可能不够合理。"</em></div></div>
+    <p style="text-align:center;margin-top:14px;color:var(--rd);font-size:.75rem;font-weight:600;">⚠️ 以上分析仅供学习研究参考，不构成任何投资建议。</p>
+  </div>
+</div>
+
+<!-- ====== 终章 · 全屏沉浸式投资研判 ====== -->
+<div class="verdict-fullpage">
+
+<!-- ========================================= -->
+<!-- 📌 最终投资建议 · 视觉分隔带 -->
+<!-- ========================================= -->
+<div class="verdict-divider" style="position:relative;margin:0 0 36px;padding:32px 20px;text-align:center;overflow:hidden;">
+  <!-- 装饰横线 -->
+  <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(108,99,255,.25) 20%,rgba(108,99,255,.4) 50%,rgba(108,99,255,.25) 80%,transparent);"></div>
+  <!-- 中央标签 -->
+  <div style="position:relative;display:inline-flex;align-items:center;gap:10px;background:var(--bg);padding:8px 28px;border-radius:99px;">
+    <span style="font-size:1.2rem">💎</span>
+    <span style="font-size:.8rem;font-weight:800;letter-spacing:.12em;background:linear-gradient(135deg,var(--ac),#2db84b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">终 章 · 投 资 研 判</span>
+    <span style="font-size:1.2rem">💎</span>
+  </div>
+</div>
+
+<!-- 📌 最终投资建议（巴菲特 + 券商方法论融合） -->
+<div class="sec" id="investment-advice" style="border:2px solid rgba(108,99,255,.18);box-shadow:0 12px 48px rgba(108,99,255,.1),0 4px 16px rgba(52,199,89,.06);background:linear-gradient(180deg,#fff 0%,#fafbff 40%,#f6f8ff 100%);border-radius:24px;overflow:hidden;">
+  <!-- 顶部渐变色带 -->
+  <div style="height:4px;background:linear-gradient(90deg,var(--ac),#2db84b,var(--ac));"></div>
+  <div class="sec-h" style="background:linear-gradient(135deg,rgba(108,99,255,.06) 0%,rgba(52,199,89,.04) 100%);padding:24px 24px 20px;">
+    <div class="sec-ico" style="background:linear-gradient(135deg,var(--ac),#2db84b);color:#fff;font-size:1.4rem;width:44px;height:44px;border-radius:14px;box-shadow:0 4px 16px rgba(108,99,255,.25)">💎</div>
+    <div>
+      <div class="sec-t" style="font-size:1.15rem;font-weight:900;letter-spacing:.02em;">最终投资建议</div>
+      <div class="sec-s" style="font-size:.72rem;margin-top:4px;">巴菲特价值投资框架 × 主流券商估值方法论 · 综合研判</div>
+    </div>
+  </div>
+  <div class="sec-b" style="padding:20px 24px 24px;">
+
+    <!-- ===== 1. 结论先行 ===== -->
+    <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;background:linear-gradient(135deg,rgba(52,199,89,.06),rgba(88,86,214,.06));border-radius:var(--r);border:1px solid rgba(52,199,89,.15);margin-bottom:18px;">
+      <div style="text-align:center;min-width:80px;">
+        <div style="font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#2db84b,#6c63ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1">Underperform</div>
+        <div style="font-size:.6rem;color:var(--t3);margin-top:4px;font-weight:600">综合评级</div>
+      </div>
+      <div style="flex:1;border-left:2px solid rgba(52,199,89,.15);padding-left:16px;">
+        <div style="font-size:.82rem;font-weight:700;color:var(--t);margin-bottom:4px">⭐ 评级：<span style="color:var(--am)">谨慎乐观</span> · 长期关注</div>
+        <div style="font-size:.74rem;color:var(--t2);line-height:1.7">Tesla 拥有强品牌壁垒、领先的 FSD 技术和高速增长的储能业务，但当前 162x PE 已充分计价乐观预期。基于 DCF、SOTP 和可比估值，合理目标价 <strong style="color:var(--ac)">$190-$300</strong>（12 个月）。建议等待估值回调至合理区间再建仓。</div>
+      </div>
+    </div>
+
+    <!-- ===== 2. 三大估值方法 ===== -->
+    <div style="font-size:.78rem;font-weight:700;color:var(--t);margin-bottom:10px;display:flex;align-items:center;gap:6px">📐 三维估值推演</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+      <!-- 方法1: DCF -->
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px 16px;border:1px solid transparent;transition:all .2s">
+        <div style="font-size:.62rem;font-weight:700;color:var(--ac);margin-bottom:8px;display:flex;align-items:center;gap:4px">
+          <span style="background:var(--ac);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.55rem;flex-shrink:0">1</span>
+          <span class="term">DCF 自由现金流折现<span class="term-tip"><div class="tp-pro">DCF — Discounted Cash Flow</div><div class="tp-def">将企业未来产生的<b>所有自由现金流</b>按一定折现率折算回今天的价值。这是巴菲特最推崇的"内在价值"估值方法——不看市场情绪，只看公司能赚多少真金白银。</div><div class="tp-ez">假设这家公司未来 10 年每年赚多少钱，然后把这些钱折算成今天值多少——就像问"未来 10 年能赚 1 T的公司，今天该值多少钱？"</div></span></span>
+        </div>
+        <div style="font-size:.7rem;color:var(--t2);line-height:1.7;margin-bottom:8px">
+          基准假设：<br>
+          · FCF 年增速 20-30%（5年，基于储能高增长）<br>
+          · 永续增长率 3%<br>
+          · <span class="term">WACC<span class="term-tip"><div class="tp-pro">WACC — 加权平均资本成本</div><div class="tp-def">企业为所有资金来源（股权+债务）支付的<b>加权平均成本</b>。用作 DCF 模型中的折现率。9.5% 反映了美股成长股的风险溢价。</div><div class="tp-ez">投资者把钱给 Tesla，期望的最低回报率——如果 Tesla 赚的比这个多，就是在创造价值。9.5% 是考虑了高估值风险后的合理要求。</div></span></span> 9.5%
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--wh);border-radius:8px;border:1px solid var(--b)">
+          <div style="font-size:.6rem;color:var(--t3)">内在价值区间</div>
+          <div style="font-size:1.2rem;font-weight:800;color:var(--ac)">190 - 280</div>
+          <div style="font-size:.58rem;color:var(--t3)">USD / 股</div>
+        </div>
+      </div>
+
+      <!-- 方法2: 可比公司 -->
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px 16px;border:1px solid transparent;transition:all .2s">
+        <div style="font-size:.62rem;font-weight:700;color:var(--gn);margin-bottom:8px;display:flex;align-items:center;gap:4px">
+          <span style="background:var(--gn);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.55rem;flex-shrink:0">2</span>
+          <span class="term">可比公司估值<span class="term-tip"><div class="tp-pro">Comparable Company Analysis (Comps)</div><div class="tp-def">通过比较同行业可比公司的<b>市盈率、市销率</b>等估值倍数，来推算目标公司的合理价值。是券商最常用的相对估值方法。</div><div class="tp-ez">就像买房子——看看隔壁小区差不多大的房子卖多少钱，以此判断你家房子值多少。Tesla的"邻居"就是 Meta、Google、Toyota等。</div></span></span>
+        </div>
+        <div style="font-size:.7rem;color:var(--t2);line-height:1.7;margin-bottom:8px">
+          对标公司（2025E）：<br>
+          · Meta P/E 25x · Google 22x<br>
+          · Toyota 12x · BYD 20x<br>
+          · Tesla当前 ~162x（显著溢价）
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--wh);border-radius:8px;border:1px solid var(--b)">
+          <div style="font-size:.6rem;color:var(--t3)">合理估值区间</div>
+          <div style="font-size:1.2rem;font-weight:800;color:var(--gn)">200 - 260</div>
+          <div style="font-size:.58rem;color:var(--t3)">USD / 股（30-40x P/E）</div>
+        </div>
+      </div>
+
+      <!-- 方法3: SOTP -->
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px 16px;border:1px solid transparent;transition:all .2s">
+        <div style="font-size:.62rem;font-weight:700;color:var(--bl);margin-bottom:8px;display:flex;align-items:center;gap:4px">
+          <span style="background:var(--bl);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.55rem;flex-shrink:0">3</span>
+          <span class="term">SOTP 分部估值<span class="term-tip"><div class="tp-pro">SOTP — Sum of the Parts</div><div class="tp-def">将企业的各个业务板块<b>分别估值再加总</b>的方法。适用于Tesla这种多元化业务的公司——汽车、储能、FSD软件、充电网络各给一个合理估值，再加上 Optimus 和 Robotaxi 期权价值。</div><div class="tp-ez">就像一个大商场里有 4S 店、充电站、保险柜台、机器人展厅——把每个业务分别估价再加起来，就是整个 Tesla 的价值。</div></span></span>
+        </div>
+        <div style="font-size:.7rem;color:var(--t2);line-height:1.7;margin-bottom:8px">
+          分部估值汇总：<br>
+          · Automotive ≈ $180B (25x P/E)<br>
+          · Energy & Storage ≈ $60B (30x P/E)<br>
+          · FSD + Robotaxi ≈ $80B (期权估值)<br>
+          · Optimus + Other ≈ $20B
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--wh);border-radius:8px;border:1px solid var(--b)">
+          <div style="font-size:.6rem;color:var(--t3)">合理估值区间</div>
+          <div style="font-size:1.2rem;font-weight:800;color:var(--bl)">210 - 300</div>
+          <div style="font-size:.58rem;color:var(--t3)">USD / 股</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3. 估值温度计 ===== -->
+    <div style="background:var(--bg);border-radius:var(--r);padding:16px 20px;margin-bottom:16px;">
+      <div style="font-size:.72rem;font-weight:700;color:var(--t);margin-bottom:10px">🌡️ 估值温度计 · 当前位置</div>
+      <div style="position:relative;height:36px;background:linear-gradient(90deg,rgba(52,199,89,.3) 0%,rgba(52,199,89,.15) 30%,rgba(255,149,0,.15) 60%,rgba(255,59,48,.2) 85%,rgba(255,59,48,.3) 100%);border-radius:18px;overflow:visible;margin:0 0 6px;">
+        <!-- 标尺刻度 -->
+        <div style="position:absolute;top:100%;left:5%;font-size:.55rem;color:var(--t3);transform:translateX(-50%);margin-top:4px">极度低估</div>
+        <div style="position:absolute;top:100%;left:30%;font-size:.55rem;color:var(--t3);transform:translateX(-50%);margin-top:4px">合理偏低</div>
+        <div style="position:absolute;top:100%;left:55%;font-size:.55rem;color:var(--t3);transform:translateX(-50%);margin-top:4px">合理</div>
+        <div style="position:absolute;top:100%;left:80%;font-size:.55rem;color:var(--t3);transform:translateX(-50%);margin-top:4px">偏高</div>
+        <div style="position:absolute;top:100%;left:95%;font-size:.55rem;color:var(--t3);transform:translateX(-50%);margin-top:4px">高估</div>
+        <!-- 目标区间 -->
+        <div style="position:absolute;left:32%;top:50%;transform:translate(-50%,-50%);z-index:1">
+          <div style="background:var(--gn);color:#fff;font-size:.62rem;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px rgba(52,199,89,.3)">
+            目标 $190-300
+          </div>
+        </div>
+        <!-- 当前位置指针 - 162x PE 明显高估 -->
+        <div style="position:absolute;left:78%;top:50%;transform:translate(-50%,-50%);z-index:2">
+          <div style="background:var(--rd);color:#fff;font-size:.62rem;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px rgba(255,59,48,.3)">
+            当前 ~$250 (162x PE) →
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4. 巴菲特检查清单 ===== -->
+    <div style="font-size:.78rem;font-weight:700;color:var(--t);margin-bottom:10px;display:flex;align-items:center;gap:6px">🧓 巴菲特投资检查清单</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div style="background:rgba(52,199,89,.04);border:1px solid rgba(52,199,89,.1);border-radius:var(--r-sm);padding:12px 14px;">
+        <div style="font-size:.7rem;line-height:2;color:var(--t2)">
+          <div>✅ 能看懂的生意（卖车+储能+充电+FSD）</div>
+          <div>✅ <span class="term">持久竞争优势<span class="term-tip"><div class="tp-pro">Durable Competitive Advantage</div><div class="tp-def">巴菲特选股第一原则：企业必须拥有<b>长期可持续的竞争壁垒</b>，使竞争对手难以复制其商业模式。品牌号召力 + Supercharger 网络 + FSD 数据飞轮构成最强壁垒。</div><div class="tp-ez">巴菲特说"我要投资那种即使是傻子来当CEO也能赚钱的公司"——Tesla 的品牌和充电网络就是这种"傻瓜也做不坏"的生意。</div></span></span>（品牌+Supercharger+FSD）</div>
+          <div>⚠️ ROE 3.1%，低于巴菲特线 15%（受一次性项影响）</div>
+          <div>⚠️ 管理层远见卓识但高度依赖 Musk（关键人风险）</div>
+        </div>
+      </div>
+      <div style="background:rgba(52,199,89,.04);border:1px solid rgba(52,199,89,.1);border-radius:var(--r-sm);padding:12px 14px;">
+        <div style="font-size:.7rem;line-height:2;color:var(--t2)">
+          <div>✅ <span class="term">自由现金流充沛<span class="term-tip"><div class="tp-pro">FCF — Free Cash Flow</div><div class="tp-def">巴菲特说"现金是氧气"——自由现金流代表企业<b>真正可自由支配的活钱</b>。$2.0B FCF 不仅证明利润是真金白银，还提供了强大的抗风险缓冲。</div><div class="tp-ez">现金流就像人的呼吸——有利润但没现金流的公司就像账面上有钱但取不出来。Tesla的现金流很强，是真赚到了钱。</div></span></span>（$2.0B，+18%）</div>
+          <div>✅ 低负债经营（38.7%，净现金状态）</div>
+          <div>⚠️ 毛利率承压（25.6→18.2→17.9%），价格战影响明显</div>
+          <div>❌ <strong style="color:var(--rd)">估值偏高</strong>（P/E 162x vs 行业 20-30x）</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5. 主流券商共识 ===== -->
+    <div style="font-size:.78rem;font-weight:700;color:var(--t);margin-bottom:10px;display:flex;align-items:center;gap:6px">🏦 主流券商目标价共识（2026.04）</div>
+    <div style="overflow-x:auto;margin-bottom:16px;">
+      <table style="width:100%;border-collapse:collapse;font-size:.72rem;min-width:480px;">
+        <thead>
+          <tr style="background:var(--bg)">
+            <th style="padding:8px 12px;text-align:left;font-weight:600;color:var(--t3);font-size:.62rem;letter-spacing:.03em;border-bottom:2px solid var(--b2)">券商</th>
+            <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--t3);font-size:.62rem;border-bottom:2px solid var(--b2)">评级</th>
+            <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--t3);font-size:.62rem;border-bottom:2px solid var(--b2)">目标价 (USD)</th>
+            <th style="padding:8px 12px;text-align:left;font-weight:600;color:var(--t3);font-size:.62rem;border-bottom:2px solid var(--b2)">核心逻辑</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--b2)">
+            <td style="padding:8px 12px;font-weight:600">Goldman Sachs</td>
+            <td style="padding:8px 12px;text-align:center"><span class="gd gd-a" style="font-size:.6rem">Buy</span></td>
+            <td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--ac)">345</td>
+            <td style="padding:8px 12px;color:var(--t2)">FSD 商业化 + Robotaxi 落地 + 储能爆发</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--b2)">
+            <td style="padding:8px 12px;font-weight:600">Morgan Stanley</td>
+            <td style="padding:8px 12px;text-align:center"><span class="gd gd-a" style="font-size:.6rem">Outperform</span></td>
+            <td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--ac)">310</td>
+            <td style="padding:8px 12px;color:var(--t2)">AI + Energy 双引擎重估 · 上调目标价</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--b2)">
+            <td style="padding:8px 12px;font-weight:600">JP Morgan公司</td>
+            <td style="padding:8px 12px;text-align:center"><span class="gd gd-a" style="font-size:.6rem">Buy</span></td>
+            <td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--ac)">295</td>
+            <td style="padding:8px 12px;color:var(--t2)">SOTP 估值 · Energy 业务被严重低估</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--b2)">
+            <td style="padding:8px 12px;font-weight:600">Bernstein</td>
+            <td style="padding:8px 12px;text-align:center"><span class="gd gd-a" style="font-size:.6rem">Buy</span></td>
+            <td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--ac)">180</td>
+            <td style="padding:8px 12px;color:var(--t2)">竞争加剧 · 估值透支未来增长</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--b2)">
+            <td style="padding:8px 12px;font-weight:600">UBS</td>
+            <td style="padding:8px 12px;text-align:center"><span class="gd gd-a" style="font-size:.6rem">Buy</span></td>
+            <td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--ac)">325</td>
+            <td style="padding:8px 12px;color:var(--t2)">Supercharger + FSD 生态护城河深厚</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;font-weight:600">ARK Invest</td>
+            <td style="padding:8px 12px;text-align:center"><span class="gd gd-a" style="font-size:.6rem">Strong Buy</span></td>
+            <td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--ac)">2000</td>
+            <td style="padding:8px 12px;color:var(--t2)">Robotaxi 2030 年贡献 $600B+ 收入</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== 6. 投资策略建议 ===== -->
+    <div style="font-size:.78rem;font-weight:700;color:var(--t);margin-bottom:10px;display:flex;align-items:center;gap:6px">🎯 投资策略建议</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+      <!-- 保守型 -->
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px 16px;border-top:3px solid var(--gn)">
+        <div style="font-size:.68rem;font-weight:700;color:var(--gn);margin-bottom:8px">🛡️ Conservative</div>
+        <div style="font-size:.68rem;color:var(--t2);line-height:1.8">
+          <strong>建议：</strong>等待回调至 <strong>$180-$200</strong> 区间分批建仓<br>
+          <strong>仓位：</strong>占成长股仓位 5-10%<br>
+          <strong>持有期：</strong>3-5 年<br>
+          <strong>止损：</strong>跌破 $150（-40%）
+        </div>
+      </div>
+      <!-- 稳健型 -->
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px 16px;border-top:3px solid var(--ac)">
+        <div style="font-size:.68rem;font-weight:700;color:var(--ac);margin-bottom:8px">⚖️ Moderate</div>
+        <div style="font-size:.68rem;color:var(--t2);line-height:1.8">
+          <strong>建议：</strong>当前价位（~$250）即可<strong>分 3 批</strong>逐步建仓<br>
+          <strong>仓位：</strong>占成长股仓位 10-20%<br>
+          <strong>持有期：</strong>2-3 年<br>
+          <strong>目标：</strong>$300-$350
+        </div>
+      </div>
+      <!-- 积极型 -->
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px 16px;border-top:3px solid var(--am)">
+        <div style="font-size:.68rem;font-weight:700;color:var(--am);margin-bottom:8px">🚀 积极型投资者</div>
+        <div style="font-size:.68rem;color:var(--t2);line-height:1.8">
+          <strong>建议：</strong>当前价位直接建仓 + 逢跌加仓<br>
+          <strong>仓位：</strong>占成长股仓位 20-30%<br>
+          <strong>持有期：</strong>1-2 年<br>
+          <strong>催化剂：</strong>FSD 商业化 · Robotaxi · Optimus
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 7. 核心催化剂 & 风险提示 ===== -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <!-- 上行催化 -->
+      <div style="background:rgba(52,199,89,.04);border:1px solid rgba(52,199,89,.1);border-radius:var(--r-sm);padding:14px 16px;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--gn);margin-bottom:8px">📈 上行催化剂</div>
+        <div style="font-size:.68rem;color:var(--t2);line-height:1.9">
+          🔹 <span class="term">AI 变现<span class="term-tip"><div class="tp-pro">AI Monetization</div><div class="tp-def">将 AI 技术投资转化为实际营收的过程。Tesla 在 FSD 订阅、Robotaxi、Optimus 机器人等方面正在验证 AI 商业化能力，2026 年 6 月 Robotaxi 落地是关键节点。</div><div class="tp-ez">花了那么多钱搞 AI，现在开始看到回报——FSD 订阅人数增长、Robotaxi 2026 年落地、Optimus 开始出货，AI 正在变成真金白银。</div></span></span>超预期（FSD 订阅 + Robotaxi 落地）<br>
+          🔹 储能业务持续爆发（Megapack 产能翻倍）<br>
+          🔹 <span class="term">Optimus<span class="term-tip"><div class="tp-pro">Optimus — Tesla 人形机器人</div><div class="tp-def">Tesla 自研的<b>通用人形机器人</b>，身高 5'8"，采用与 FSD 相同的 AI 视觉系统。目标是替代危险/重复性劳动。Elon Musk 称其"长期价值将超过汽车业务"。预计 2026 年开始小规模出货。</div><div class="tp-ez">就是 Tesla 造的"机器人工人"——长得像人，能搬东西、做家务。马斯克说这玩意以后比造车还赚钱，2026 年开始卖。</div></span></span> 人形机器人 2026 出货开启新增长曲线<br>
+          🔹 毛利率触底回升（规模效应 + 成本优化）<br>
+          🔹 <span class="term">估值重估<span class="term-tip"><div class="tp-pro">Re-rating（估值重估）</div><div class="tp-def">市场重新认识公司价值，给予更高的估值倍数。当前Tesla P/E ~162x 远高于传统车企 12-25x，但若 FSD/Robotaxi 兑现预期，高估值可获支撑。</div><div class="tp-ez">就像一家创业公司估值很贵，但如果产品真的爆了，回头看反而便宜——Tesla 的 FSD 和 Robotaxi 就是这个"爆不爆"的关键变量。</div></span></span>（FSD/Robotaxi 商业化兑现）
+        </div>
+      </div>
+      <!-- 下行风险 -->
+      <div style="background:rgba(255,59,48,.03);border:1px solid rgba(255,59,48,.1);border-radius:var(--r-sm);padding:14px 16px;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--rd);margin-bottom:8px">📉 下行风险</div>
+        <div style="font-size:.68rem;color:var(--t2);line-height:1.9">
+          🔸 竞争白热化 → 持续降价侵蚀利润<br>
+          🔸 Robotaxi 延期 → 高估值难以支撑<br>
+          🔸 宏观经济放缓压制全球汽车需求<br>
+          🔸 FSD 监管审批不确定性<br>
+          🔸 全球科技股系统性回调
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 8. 大师最终判词 ===== -->
+    <div style="background:linear-gradient(135deg,rgba(88,86,214,.06),rgba(52,199,89,.04));border:1px solid rgba(88,86,214,.12);border-radius:var(--r);padding:16px 20px;margin-bottom:12px;">
+      <div style="font-size:.72rem;font-weight:700;color:var(--ac);margin-bottom:10px">🎓 五位大师最终判词</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:8px;font-size:.72rem;">
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:var(--wh);border-radius:8px">
+          <span style="font-weight:800;color:var(--ac);white-space:nowrap;min-width:90px">🧓 巴菲特：</span>
+          <span style="color:var(--t2);line-height:1.6"><em>"品牌力极强，Supercharger 网络是真正的护城河。但 162x PE 太贵了——我宁愿等到合理价格再出手。<strong style="color:var(--am)">好公司，但需要好价格。</strong>"</em></span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:var(--wh);border-radius:8px">
+          <span style="font-weight:800;color:var(--gn);white-space:nowrap;min-width:90px">📐 格雷厄姆：</span>
+          <span style="color:var(--t2);line-height:1.6"><em>"堡垒级资产负债表 + 充裕安全边际。38.7% 低负债 + $36.6B 现金 = 即使黑天鹅来袭也有足够弹药。<strong style="color:var(--gn)">安全边际充足，可以买入。</strong>"</em></span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:var(--wh);border-radius:8px">
+          <span style="font-weight:800;color:var(--am);white-space:nowrap;min-width:90px">🧐 芒格：</span>
+          <span style="color:var(--t2);line-height:1.6"><em>"品牌壁垒 + FSD 数据飞轮 = 长期价值。但 162x PE 需要耐心等待更好的入场时机。<strong style="color:var(--am)">谨慎乐观。</strong>"</em></span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:var(--wh);border-radius:8px">
+          <span style="font-weight:800;color:var(--pk);white-space:nowrap;min-width:90px">🦉 费雪：</span>
+          <span style="color:var(--t2);line-height:1.6"><em>"AI 是Tesla的下一个十年增长引擎。管理层在寒冬控费、复苏投资的节奏感令人印象深刻。<strong style="color:var(--gn)">长期成长股，买入。</strong>"</em></span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:var(--wh);border-radius:8px">
+          <span style="font-weight:800;color:var(--rd);white-space:nowrap;min-width:90px">🕵️ 风控官：</span>
+          <span style="color:var(--t2);line-height:1.6"><em>"综合风险中等（52/100）。最大风险是竞争加剧和高估值，但 $36.6B 现金 + $2.0B FCF 提供安全垫。<strong style="color:var(--am)">需等待估值回归合理区间。</strong>"</em></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 9. 图表：估值对比 + 目标价汇总 ===== -->
+    <div class="chart-row">
+      <div class="chart-wrap">
+        <div class="chart-title">📊 全球科技巨头 P/E 估值对比 <span class="chart-subtitle">Tesla 的"溢价"一目了然</span></div>
+        <canvas id="chartPECompare"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">🎯 三种估值方法汇总 <span class="chart-subtitle">目标价区间（USD）</span></div>
+        <canvas id="chartValuationRange"></canvas>
+      </div>
+    </div>
+
+    <!-- ===== 最终风险声明 ===== -->
+    <div style="margin-top:14px;padding:12px 16px;background:rgba(255,59,48,.04);border:1px solid rgba(255,59,48,.1);border-radius:var(--r-sm);">
+      <p style="text-align:center;color:var(--rd);font-size:.72rem;font-weight:700;margin-bottom:4px;">⚠️ 重要声明</p>
+      <p style="text-align:center;color:var(--t3);font-size:.64rem;line-height:1.7;margin:0;">
+        本报告所有分析基于公开数据和学术方法论，仅供学习研究参考，<strong>不构成任何投资建议</strong>。<br>
+        投资有风险，入市需谨慎。个股分析不代表对未来走势的预测。请根据自身风险承受能力独立决策。
+      </p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /verdict-fullpage -->
+
+<!-- 投资建议与市场声音之间的视觉间隔 -->
+<div style="height:24px;"></div>
+
+<!-- MARKET VOICES -->
+<div class="sec">
+  <div class="sec-h"><div class="sec-ico" style="background:var(--bll);color:var(--bl);">𝕏</div><div><div class="sec-t">市场声音</div><div class="sec-s">CNBC · Bloomberg · Seeking Alpha · 券商研报 · 截至 2026.01</div></div></div>
+  <div class="sec-b">
+    <div class="po">
+      <div class="po-i"><div class="po-s">CNBC · 2026.01</div><div class="po-t"><strong>Q4 revenue beats estimates.</strong> Energy storage revenue surges 113%.</div><a class="po-a" href="https://www.cnbc.com/2026/01/29/tesla-q4-2025-earnings.html" target="_blank">cnbc.com →</a></div>
+      <div class="po-i"><div class="po-s">Bloomberg · 2026.01</div><div class="po-t"><strong>Profit drops 71%</strong> on tax benefit comparison, but adjusted EPS beats.</div><a class="po-a" href="https://www.bloomberg.com/news/articles/2026-01-29/tesla-q4-earnings" target="_blank">bloomberg.com →</a></div>
+      <div class="po-i"><div class="po-s">Morgan Stanley · 2026.02</div><div class="po-t">维持 <strong>Overweight</strong>，目标价 <strong>$430</strong>。FSD + Robotaxi 是关键催化剂。</div><a class="po-a" href="https://seekingalpha.com/symbol/TSLA" target="_blank">研报摘要 →</a></div>
+      <div class="po-i"><div class="po-s">Goldman Sachs · 2026.02</div><div class="po-t">目标价 <strong>$345</strong>，<strong>Buy</strong>。储能业务被严重低估。</div><a class="po-a" href="https://seekingalpha.com/symbol/TSLA" target="_blank">研报摘要 →</a></div>
+      <div class="po-i"><div class="po-s">Bernstein · 2026.01</div><div class="po-t">维持 <strong>Underperform</strong>，目标价 <strong>$120</strong>。估值脱离基本面。</div><a class="po-a" href="https://seekingalpha.com/symbol/TSLA" target="_blank">研报摘要 →</a></div>
+      <div class="po-i"><div class="po-s">ARK Invest · 2026.02</div><div class="po-t"><strong>$2,600 目标价</strong>（2029）。Robotaxi 是颠覆性机会。</div><a class="po-a" href="https://ark-invest.com/articles/analyst-research/tesla-price-target-2/" target="_blank">ark-invest.com →</a></div>
+      <div class="po-i"><div class="po-s">Elon Musk · 2026.01</div><div class="po-t">"<strong>2026 will be incredible. Robotaxi launches in June, Optimus ships 2026.</strong>"</div><a class="po-a" href="https://ir.tesla.com/" target="_blank">Earnings Call →</a></div>
+      <div class="po-i po-fw"><div class="po-s">Seeking Alpha · 2026.01</div><div class="po-t">Multiple analyses: <strong>energy storage underappreciated</strong>, FSD monetization upside, but <strong>auto margins remain under pressure</strong>.</div><a class="po-a" href="https://seekingalpha.com/symbol/TSLA/analysis" target="_blank">seekingalpha.com → 全部分析</a></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- reportArea -->
+
+<!-- FOOTER BAR -->
+<div class="fb">
+  <div class="fb-t">保存 PDF 后可上传至 <a href="https://notebooklm.google.com/notebook/new" target="_blank">NotebookLM</a> 继续用 AI 深挖</div>
+  <div class="fb-b">
+    <button class="ibtn" onclick="window.print()">保存 PDF</button>
+    <button class="ibtn" style="background:var(--ac);color:#fff;border-color:var(--ac);" onclick="doCopy()">复制摘要</button>
+  </div>
+</div>
+
+</div><!-- main -->
+
+<div class="footer">小罗test-商业透视眼🔍 · Business Insight Eye · 为小罗定制<br>数据来源：Tesla Investor Relations · SEC 10-K Filing · Bloomberg · Reuters<br>仅供学习研究，不构成投资建议。</div>
+
+<script>
+// Score hover tooltip
+function bindTips(){
+  document.querySelectorAll('.sc').forEach(function(el){
+    el.addEventListener('mouseenter',function(){
+      var tipEl=el.querySelector('.sc-tip');
+      if(tipEl){var t=document.getElementById('stip');t.innerHTML=tipEl.innerHTML;t.classList.add('on');}
+    });
+  });
+  var sg=document.getElementById('sgrid');
+  if(sg) sg.addEventListener('mouseleave',function(){document.getElementById('stip').classList.remove('on');});
+}
+bindTips();
+
+// Copy
+function doCopy(){
+  var el=document.getElementById('copyData');
+  var t=el?el.value:'暂无摘要数据';
+  navigator.clipboard.writeText(t).then(function(){
+    var b=document.getElementById('cpBtn');b.textContent='已复制 ✓';setTimeout(function(){b.textContent='复制摘要';},1500);
+  });
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ===== 桑基图 SVG 连接线 =====
+(function(){
+  var box=document.getElementById('sankeyBox');
+  var svg=document.getElementById('sankeySvg');
+  if(!box||!svg) return;
+
+  function drawSankey(){
+    svg.innerHTML='';
+    var bx=box.getBoundingClientRect();
+    svg.setAttribute('viewBox','0 0 '+bx.width+' '+bx.height);
+
+    var leftToMid=[
+      ['skL0','skM0','rgba(88,86,214,.1)',28],
+      ['skL0','skM1','rgba(88,86,214,.08)',10],
+      ['skL1','skM2','rgba(52,199,89,.1)',20],
+      ['skL2','skM3','rgba(255,107,157,.08)',18],
+      ['skL3','skM4','rgba(0,122,255,.08)',6]
+    ];
+
+    var midToRight=[
+      ['skM0','skR0','rgba(255,149,0,.1)',22],
+      ['skM0','skR3','rgba(52,199,89,.08)',8],
+      ['skM1','skR0','rgba(255,149,0,.06)',4],
+      ['skM1','skR3','rgba(52,199,89,.1)',6],
+      ['skM2','skR0','rgba(255,149,0,.08)',14],
+      ['skM2','skR3','rgba(52,199,89,.06)',6],
+      ['skM3','skR0','rgba(255,149,0,.08)',10],
+      ['skM3','skR1','rgba(0,122,255,.08)',6],
+      ['skM3','skR3','rgba(52,199,89,.06)',4],
+      ['skM4','skR2','rgba(48,176,199,.06)',4],
+      ['skM4','skR4','rgba(255,59,48,.06)',3]
+    ];
+
+    function drawFlow(from,to,color,w){
+      var f=document.getElementById(from);
+      var t=document.getElementById(to);
+      if(!f||!t) return;
+      var fr=f.getBoundingClientRect();
+      var tr=t.getBoundingClientRect();
+      var x1=fr.right-bx.left, y1=fr.top+fr.height/2-bx.top;
+      var x2=tr.left-bx.left, y2=tr.top+tr.height/2-bx.top;
+      var cx1=x1+(x2-x1)*0.45, cx2=x2-(x2-x1)*0.45;
+      var hw=w/2;
+      var p=document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d',
+        'M'+x1+','+(y1-hw)+' C'+cx1+','+(y1-hw)+' '+cx2+','+(y2-hw)+' '+x2+','+(y2-hw)+
+        ' L'+x2+','+(y2+hw)+' C'+cx2+','+(y2+hw)+' '+cx1+','+(y1+hw)+' '+x1+','+(y1+hw)+' Z'
+      );
+      p.setAttribute('fill',color);
+      p.setAttribute('stroke','none');
+      svg.appendChild(p);
+    }
+
+    leftToMid.forEach(function(c){drawFlow(c[0],c[1],c[2],c[3]);});
+    midToRight.forEach(function(c){drawFlow(c[0],c[1],c[2],c[3]);});
+  }
+
+  setTimeout(drawSankey,300);
+  window.addEventListener('resize',function(){setTimeout(drawSankey,100);});
+})();
+
+// Auto-position term tooltips — use fixed positioning to prevent overflow
+document.querySelectorAll('.term').forEach(function(el){
+  el.addEventListener('mouseenter',function(e){
+    var tip=el.querySelector('.term-tip');
+    if(!tip) return;
+    // Reset position first to measure
+    tip.style.left='0';tip.style.top='0';
+    // Use requestAnimationFrame so the tip is visible for measurement
+    requestAnimationFrame(function(){
+      var r=el.getBoundingClientRect();
+      var tw=tip.offsetWidth||320;
+      var th=tip.offsetHeight||200;
+      // Default: center above the term
+      var left=r.left+r.width/2-tw/2;
+      var top=r.top-th-10;
+      // If overflows top, show below
+      if(top<8){top=r.bottom+10;}
+      // If overflows left
+      if(left<8) left=8;
+      // If overflows right
+      if(left+tw>window.innerWidth-8) left=window.innerWidth-tw-8;
+      tip.style.left=left+'px';
+      tip.style.top=top+'px';
+    });
+  });
+});
+
+// =============================================
+// 📊 Chart.js — 全部图表初始化
+// =============================================
+(function(){
+  var years = ['2021','2022','2023','2024','2025'];
+  // 淡色系配色：与页面整体风格一致
+  var purple = 'rgba(88,86,214,.65)', green = 'rgba(52,199,89,.65)', blue = 'rgba(0,122,255,.6)', red = 'rgba(255,59,48,.55)', amber = 'rgba(255,149,0,.6)', pink = 'rgba(175,82,222,.55)';
+  var purpleL = 'rgba(88,86,214,.1)', greenL = 'rgba(52,199,89,.1)', blueL = 'rgba(0,122,255,.08)', redL = 'rgba(255,59,48,.08)';
+  // 柱状图用浅色填充 + 半透明边框
+  var purpleBar = 'rgba(88,86,214,.18)', greenBar = 'rgba(52,199,89,.18)', blueBar = 'rgba(0,122,255,.15)', amberBar = 'rgba(255,149,0,.18)';
+  var purpleBdr = 'rgba(88,86,214,.5)', greenBdr = 'rgba(52,199,89,.5)', blueBdr = 'rgba(0,122,255,.45)', amberBdr = 'rgba(255,149,0,.5)';
+
+  // Chart.js 全局配置
+  Chart.defaults.font.family = "Inter,'Noto Sans SC',sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#6e6e73';
+  Chart.defaults.responsive = true;
+  Chart.defaults.maintainAspectRatio = false;
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.legend.labels.pointStyleWidth = 8;
+  Chart.defaults.plugins.legend.labels.boxHeight = 7;
+
+  // ---- DIM1: 营收结构饼图 ----
+  new Chart(document.getElementById('chartRevPie'),{
+    type:'doughnut',
+    data:{
+      labels:['Automotive','Energy & Storage','Services & Other','Reg Credits'],
+      datasets:[{
+        data:[19806,3060,2753,595],
+        backgroundColor:['rgba(88,86,214,.55)','rgba(52,199,89,.5)','rgba(255,107,157,.45)','rgba(174,174,178,.35)'],
+        borderWidth:2,
+        borderColor:['rgba(88,86,214,.5)','rgba(52,199,89,.5)','rgba(255,107,157,.45)','rgba(174,174,178,.35)'],
+        hoverOffset:8
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      aspectRatio:1,
+      cutout:'55%',
+      plugins:{
+        legend:{position:'bottom',labels:{padding:12,font:{size:11}}},
+        tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'亿 ('+Math.round(c.raw/7518*100)+'%)';}}}
+      }
+    }
+  });
+
+  // ---- DIM2: 营收 vs 净利润 ----
+  new Chart(document.getElementById('chartRevProfit'),{
+    type:'bar',
+    data:{
+      labels:years,
+      datasets:[
+        {label:'营收',data:[53823,81462,96773,97690,94827],backgroundColor:'rgba(88,86,214,.45)',borderColor:'rgba(88,86,214,.6)',borderWidth:1,borderRadius:5,barPercentage:0.75,categoryPercentage:0.7},
+        {label:'归母净利润',data:[5519,12556,14997,7091,3794],backgroundColor:'rgba(52,199,89,.4)',borderColor:'rgba(52,199,89,.6)',borderWidth:1,borderRadius:5,barPercentage:0.75,categoryPercentage:0.7}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'$M';}}}
+      },
+      scales:{
+        y:{beginAtZero:false,min:0,ticks:{callback:function(v){return '$'+(v>=1000?(v/1000+'k'):v);}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM2: 毛利率趋势 ----
+  new Chart(document.getElementById('chartGrossMargin'),{
+    type:'line',
+    data:{
+      labels:years,
+      datasets:[{
+        label:'毛利率 %',
+        data:[25.3,25.6,18.2,17.9,18.0],
+        borderColor:'rgba(52,199,89,.8)',
+        backgroundColor:'rgba(52,199,89,.15)',
+        fill:true,
+        tension:0.35,
+        pointRadius:5,
+        pointBackgroundColor:'rgba(52,199,89,.8)',
+        pointBorderColor:'#fff',
+        pointBorderWidth:2
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:function(c){return '毛利率: '+c.raw+'%';}}}
+      },
+      scales:{
+        y:{min:10,max:35,ticks:{callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM3: ROE 趋势 + 巴菲特线 ----
+  new Chart(document.getElementById('chartROE'),{
+    type:'line',
+    data:{
+      labels:years,
+      datasets:[
+        {
+          label:'ROE',
+          data:[18.3,28.1,23.9,9.7,4.6],
+          borderColor:purple,
+          backgroundColor:purpleL,
+          fill:true,
+          tension:0.35,
+          pointRadius:5,
+          pointBackgroundColor:purple,
+          pointBorderColor:'#fff',
+          pointBorderWidth:2
+        },
+        {
+          label:'巴菲特线 (15%)',
+          data:[15,15,15,15,15],
+          borderColor:red,
+          borderDash:[6,4],
+          borderWidth:2,
+          pointRadius:0,
+          fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'%';}}}
+      },
+      scales:{
+        y:{min:0,max:30,ticks:{callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM3: 净利率 & 毛利率对比 ----
+  new Chart(document.getElementById('chartMargins'),{
+    type:'line',
+    data:{
+      labels:years,
+      datasets:[
+        {label:'毛利率',data:[25.3,25.6,18.2,17.9,18.0],borderColor:green,backgroundColor:'transparent',tension:0.35,pointRadius:4,pointBackgroundColor:green},
+        {label:'净利率(GAAP)',data:[10.3,15.4,15.5,7.3,4.0],borderColor:blue,backgroundColor:'transparent',tension:0.35,pointRadius:4,pointBackgroundColor:blue},
+        {label:'经营利润率',data:[12.1,16.8,9.2,7.2,4.6],borderColor:amber,backgroundColor:'transparent',tension:0.35,pointRadius:4,pointBackgroundColor:amber}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'%';}}}
+      },
+      scales:{
+        y:{min:0,max:35,ticks:{callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM4: 护城河雷达图 ----
+  new Chart(document.getElementById('chartMoat'),{
+    type:'radar',
+    data:{
+      labels:['品牌力','规模制造','充电网络','技术领先','成本优势'],
+      datasets:[{
+        label:'Tesla',
+        data:[5,4,4,5,3],
+        backgroundColor:'rgba(88,86,214,.15)',
+        borderColor:purple,
+        borderWidth:2,
+        pointBackgroundColor:purple,
+        pointRadius:4
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        r:{
+          beginAtZero:true,
+          min:0,
+          max:5,
+          ticks:{stepSize:1,font:{size:10},backdropColor:'transparent'},
+          pointLabels:{font:{size:11,weight:'600'}},
+          grid:{color:'rgba(0,0,0,.06)'},
+          angleLines:{color:'rgba(0,0,0,.06)'}
+        }
+      }
+    }
+  });
+
+  // ---- DIM5: FCF Margin 趋势 ----
+  new Chart(document.getElementById('chartCashRatio'),{
+    type:'line',
+    data:{
+      labels:years,
+      datasets:[
+        {
+          label:'FCF Margin',
+          data:[9.3,9.3,4.5,3.7,6.6],
+          borderColor:purple,
+          backgroundColor:purpleL,
+          fill:true,
+          tension:0.35,
+          pointRadius:6,
+          pointBackgroundColor:function(ctx){return ctx.raw>=5?green:red;},
+          pointBorderColor:'#fff',
+          pointBorderWidth:2.5
+        },
+        {
+          label:'健康线 (5%)',
+          data:[5,5,5,5,5],
+          borderColor:'#aeaeb2',
+          borderDash:[8,5],
+          borderWidth:2,
+          pointRadius:0,
+          fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'%';}}}
+      },
+      scales:{
+        y:{min:0,max:12,ticks:{stepSize:2,callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM5: 净利润 vs 自由现金流 ----
+  new Chart(document.getElementById('chartProfitFCF'),{
+    type:'bar',
+    data:{
+      labels:years,
+      datasets:[
+        {label:'净利润',data:[5519,12556,14997,7091,3794],backgroundColor:'rgba(88,86,214,.45)',borderColor:'rgba(88,86,214,.6)',borderWidth:1,borderRadius:5,barPercentage:0.75,categoryPercentage:0.7},
+        {label:'自由现金流',data:[4983,7561,4357,3581,6220],backgroundColor:'rgba(52,199,89,.4)',borderColor:'rgba(52,199,89,.6)',borderWidth:1,borderRadius:5,barPercentage:0.75,categoryPercentage:0.7}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'$M';}}}
+      },
+      scales:{
+        y:{beginAtZero:true,ticks:{callback:function(v){return '$'+(v>=1000?(v/1000+'k'):v);}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM6: 资产负债率趋势 ----
+  new Chart(document.getElementById('chartDebtRatio'),{
+    type:'line',
+    data:{
+      labels:years,
+      datasets:[
+        {
+          label:'资产负债率',
+          data:[49.1,34.5,40.3,39.6,39.9],
+          borderColor:blue,
+          backgroundColor:blueL,
+          fill:true,
+          tension:0.35,
+          pointRadius:5,
+          pointBackgroundColor:blue,
+          pointBorderColor:'#fff',
+          pointBorderWidth:2
+        },
+        {
+          label:'安全线 (60%)',
+          data:[60,60,60,60,60],
+          borderColor:red,
+          borderDash:[6,4],
+          borderWidth:2,
+          pointRadius:0,
+          fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'%';}}}
+      },
+      scales:{
+        y:{min:20,max:70,ticks:{callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM6: 总资产 & 负债 ----
+  new Chart(document.getElementById('chartBalance'),{
+    type:'bar',
+    data:{
+      labels:years,
+      datasets:[
+        {label:'总资产',data:[62.1,82.3,106.6,122.1,137.8],backgroundColor:'rgba(0,122,255,.4)',borderColor:'rgba(0,122,255,.6)',borderWidth:1.5,borderRadius:4,barPercentage:0.5},
+        {label:'总负债',data:[30.5,28.4,43.0,48.4,54.9],backgroundColor:'rgba(255,149,0,.4)',borderColor:'rgba(255,149,0,.6)',borderWidth:1.5,borderRadius:4,barPercentage:0.5}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+c.raw+'B';}}}
+      },
+      scales:{
+        y:{beginAtZero:true,max:140,ticks:{callback:function(v){return '$'+v+'B';}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM1: 近5年业务线收入堆叠柱状图 ----
+  (function(){
+    var ctx2=document.getElementById('chartRevStack').getContext('2d');
+    // 渐变色
+    var gPurple=ctx2.createLinearGradient(0,0,0,260);
+    gPurple.addColorStop(0,'rgba(88,86,214,.35)');gPurple.addColorStop(1,'rgba(88,86,214,.12)');
+    var gGreen=ctx2.createLinearGradient(0,0,0,260);
+    gGreen.addColorStop(0,'rgba(52,199,89,.35)');gGreen.addColorStop(1,'rgba(52,199,89,.12)');
+    var gPink=ctx2.createLinearGradient(0,0,0,260);
+    gPink.addColorStop(0,'rgba(255,107,157,.35)');gPink.addColorStop(1,'rgba(255,107,157,.12)');
+    var gGray=ctx2.createLinearGradient(0,0,0,260);
+    gGray.addColorStop(0,'rgba(174,174,178,.25)');gGray.addColorStop(1,'rgba(174,174,178,.08)');
+
+    new Chart(ctx2,{
+      type:'bar',
+      data:{
+        labels:years,
+        datasets:[
+          {label:'Automotive',data:[47232,71462,82419,77070,69526],backgroundColor:gPurple,borderColor:'rgba(88,86,214,.4)',borderWidth:1.5,borderRadius:2},
+          {label:'Energy',data:[2789,3909,6035,10086,12771],backgroundColor:gGreen,borderColor:'rgba(52,199,89,.4)',borderWidth:1.5,borderRadius:2},
+          {label:'Services',data:[3802,6091,8319,10534,12530],backgroundColor:gPink,borderColor:'rgba(255,107,157,.4)',borderWidth:1.5,borderRadius:2},
+          {label:'Credits & Other',data:[1580,1776,1790,2051,2100],backgroundColor:gGray,borderColor:'rgba(174,174,178,.3)',borderWidth:1.5,borderRadius:2}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{position:'top',labels:{padding:14,font:{size:10,weight:'500'}}},
+          tooltip:{
+            mode:'index',
+            intersect:false,
+            callbacks:{
+              label:function(c){return ' '+c.dataset.label+': $'+c.raw+'M';},
+              footer:function(items){var s=0;items.forEach(function(i){s+=i.raw;});return 'Total: $'+s+'M';}
+            }
+          }
+        },
+        scales:{
+          x:{stacked:true,grid:{display:false}},
+          y:{stacked:true,beginAtZero:true,ticks:{callback:function(v){return '$'+(v>=1000?(v/1000+'k'):v);}},grid:{color:'rgba(0,0,0,.04)'}}
+        }
+      }
+    });
+  })();
+
+  // ---- DIM4: 护城河竞品对比 ----
+  new Chart(document.getElementById('chartMoatCompare'),{
+    type:'bar',
+    data:{
+      labels:['品牌力','规模制造','充电网络','技术领先','成本优势'],
+      datasets:[
+        {label:'Tesla',data:[5,4,4,5,3],backgroundColor:purpleBar,borderColor:purpleBdr,borderWidth:1.5,borderRadius:3,barPercentage:0.7},
+        {label:'BYD',data:[3,5,2,4,5],backgroundColor:amberBar,borderColor:amberBdr,borderWidth:1.5,borderRadius:3,barPercentage:0.7},
+        {label:'Rivian',data:[2,1,1,2,1],backgroundColor:'rgba(255,107,157,.18)',borderColor:'rgba(255,107,157,.45)',borderWidth:1.5,borderRadius:3,barPercentage:0.7}
+      ]
+    },
+    options:{
+      responsive:true,
+      indexAxis:'y',
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'/5';}}}
+      },
+      scales:{
+        x:{min:0,max:5,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,.04)'}},
+        y:{grid:{display:false}}
+      }
+    }
+  });
+
+  // ---- DIM7: 资本配置饼图 ----
+  new Chart(document.getElementById('chartCapAlloc'),{
+    type:'doughnut',
+    data:{
+      labels:['R&D 研发','CapEx 资本开支','Debt 偿债','OpEx 运营','Other'],
+      datasets:[{
+        data:[4600,11300,1800,6200,2100],
+        backgroundColor:['rgba(88,86,214,.5)','rgba(0,122,255,.45)','rgba(52,199,89,.45)','rgba(255,149,0,.45)','rgba(174,174,178,.3)'],
+        borderWidth:2,
+        borderColor:['rgba(88,86,214,.45)','rgba(0,122,255,.4)','rgba(52,199,89,.45)','rgba(255,149,0,.45)','rgba(174,174,178,.3)'],
+        hoverOffset:8
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      aspectRatio:1,
+      cutout:'50%',
+      plugins:{
+        legend:{position:'bottom',labels:{padding:10,font:{size:10}}},
+        tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'亿 ('+Math.round(c.raw/2600*100)+'%)';}}}
+      }
+    }
+  });
+
+  // ---- DIM7: 近5年股东回报 ----
+  new Chart(document.getElementById('chartShareholderReturn'),{
+    type:'bar',
+    data:{
+      labels:years,
+      datasets:[
+        {label:'Dividends',data:[0,0,0,0,0],backgroundColor:'rgba(52,199,89,.4)',borderColor:'rgba(52,199,89,.6)',borderWidth:1.5,borderRadius:4,barPercentage:0.55},
+        {label:'Buyback',data:[0,5600,0,0,0],backgroundColor:'rgba(255,149,0,.35)',borderColor:'rgba(255,149,0,.55)',borderWidth:1.5,borderRadius:4,barPercentage:0.55}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'$M';}}}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false}},
+        y:{stacked:true,beginAtZero:true,ticks:{callback:function(v){return '$'+(v>=1000?(v/1000+'k'):v);}},grid:{color:'rgba(0,0,0,.04)'}}
+      }
+    }
+  });
+
+  // ---- 综合评定: 8维度雷达图 ----
+  new Chart(document.getElementById('chartFinalRadar'),{
+    type:'radar',
+    data:{
+      labels:['商业模式','增长质量','竞争力','护城河','现金流','资产负债','管理层','风险控制'],
+      datasets:[{
+        label:'Tesla',
+        data:[85,55,82,88,78,82,72,58],
+        backgroundColor:'rgba(88,86,214,.12)',
+        borderColor:purple,
+        borderWidth:2.5,
+        pointBackgroundColor:purple,
+        pointRadius:5,
+        pointBorderColor:'#fff',
+        pointBorderWidth:2
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        r:{
+          beginAtZero:true,min:0,max:100,
+          ticks:{stepSize:20,font:{size:9},backdropColor:'transparent'},
+          pointLabels:{font:{size:10,weight:'600'}},
+          grid:{color:'rgba(0,0,0,.06)'},
+          angleLines:{color:'rgba(0,0,0,.06)'}
+        }
+      }
+    }
+  });
+
+  // ---- 综合评定: 8维度柱状图 ----
+  new Chart(document.getElementById('chartFinalBar'),{
+    type:'bar',
+    data:{
+      labels:['护城河','商业模式','竞争力','现金流','资产负债','管理层','风险控制','增长质量'],
+      datasets:[{
+        label:'评分',
+        data:[88,85,82,82,78,72,58,55],
+        backgroundColor:function(ctx){
+          var v=ctx.raw;
+          return v>=90?'rgba(52,199,89,.55)':v>=80?'rgba(0,122,255,.45)':'rgba(255,149,0,.5)';
+        },
+        borderColor:function(ctx){
+          var v=ctx.raw;
+          return v>=90?'rgba(52,199,89,.7)':v>=80?'rgba(0,122,255,.6)':'rgba(255,149,0,.7)';
+        },
+        borderWidth:1.5,
+        borderRadius:5,
+        barPercentage:0.7
+      }]
+    },
+    options:{
+      responsive:true,
+      indexAxis:'y',
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:function(c){return c.raw+'/100';}}}
+      },
+      scales:{
+        x:{min:0,max:100,ticks:{stepSize:25,font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}},
+        y:{grid:{display:false},ticks:{font:{size:10}}}
+      }
+    }
+  });
+
+  // ---- 投资建议: 全球科技巨头 P/E 对比 ----
+  new Chart(document.getElementById('chartPECompare'),{
+    type:'bar',
+    data:{
+      labels:['Apple','Microsoft','Meta','Google','Tesla','BYD'],
+      datasets:[{
+        label:'P/E 倍数',
+        data:[32,35,25,22,162,20],
+        backgroundColor:function(ctx){
+          return ctx.dataIndex===4?'rgba(88,86,214,.6)':'rgba(174,174,178,.3)';
+        },
+        borderColor:function(ctx){
+          return ctx.dataIndex===4?'rgba(88,86,214,.8)':'rgba(174,174,178,.4)';
+        },
+        borderWidth:1.5,
+        borderRadius:5,
+        barPercentage:0.65
+      }]
+    },
+    options:{
+      responsive:true,
+      indexAxis:'y',
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:function(c){return c.raw+'x P/E';}}}
+      },
+      scales:{
+        x:{min:0,max:40,ticks:{callback:function(v){return v+'x';},stepSize:10},grid:{color:'rgba(0,0,0,.04)'}},
+        y:{grid:{display:false},ticks:{font:{size:11,weight:'600'}}}
+      }
+    }
+  });
+
+  // ---- 投资建议: 三种估值方法汇总 ----
+  (function(){
+    var valCtx=document.getElementById('chartValuationRange');
+    // 用floating bar表示区间
+    new Chart(valCtx,{
+      type:'bar',
+      data:{
+        labels:['DCF Model','Comp Analysis','SOTP','Target Range'],
+        datasets:[
+          {
+            label:'低值',
+            data:[180,200,190,190],
+            backgroundColor:'transparent',
+            borderWidth:0,
+            barPercentage:0.5
+          },
+          {
+            label:'估值区间',
+            data:[120,100,110,110],
+            backgroundColor:['rgba(88,86,214,.45)','rgba(52,199,89,.4)','rgba(0,122,255,.4)','rgba(255,149,0,.5)'],
+            borderColor:['rgba(88,86,214,.6)','rgba(52,199,89,.6)','rgba(0,122,255,.6)','rgba(255,149,0,.7)'],
+            borderWidth:1.5,
+            borderRadius:5,
+            barPercentage:0.5
+          }
+        ]
+      },
+      options:{
+        responsive:true,
+        indexAxis:'y',
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              label:function(c){
+                if(c.datasetIndex===0) return '';
+                var bases=[180,200,190,190];
+                var ranges=[120,100,110,110];
+                var i=c.dataIndex;
+                return bases[i]+' - '+(bases[i]+ranges[i])+' USD';
+              }
+            }
+          }
+        },
+        scales:{
+          x:{
+            stacked:true,
+            min:100,
+            max:400,
+            ticks:{callback:function(v){return v+' USD';},stepSize:50},
+            grid:{color:'rgba(0,0,0,.04)'}
+          },
+          y:{stacked:true,grid:{display:false},ticks:{font:{size:11,weight:'600'}}}
+        }
+      }
+    });
+  })();
+
+})();
+</script>
+</body>
+</html>

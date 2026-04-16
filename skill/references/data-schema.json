@@ -1,0 +1,329 @@
+{
+  "_version": "3.0",
+  "_comment": "商业透视眼数据规范 v3.0 — 所有字段说明 + 校验规则",
+
+  "meta": {
+    "company": "公司名称（中/英）",
+    "ticker": "股票代码，如 TSLA / 00700.HK",
+    "exchange": "交易所，如 NASDAQ / 港交所",
+    "period": "报告期间，如 2025 Q4 / 2025 全年",
+    "pub_date": "财报发布日期，如 2026.01.29",
+    "report_title": "页面大标题，如 2025 Tesla 财报分析",
+    "currency": "货币符号：$ / ¥ / HK$",
+    "unit": "金额单位：M(百万) / B(十亿) / 亿",
+    "unit_label": "图表单位标签：$M / $B / 亿元",
+    "data_sources": "数据来源，如 Tesla IR · SEC 10-K",
+    "years": ["5年/5期标签数组，如 2021/2022/2023/2024/2025"],
+    "accounting_standard": "IFRS / US-GAAP",
+    "profit_basis": "净利润口径：IFRS / Non-IFRS / GAAP / Non-GAAP",
+    "market_convention": "涨跌色：cn(涨红跌绿) / us(涨绿跌红)"
+  },
+
+  "hero": {
+    "nav_pills": ["5个导航标签，如 美股/纳斯达克100/新能源车/AI & FSD/储能"],
+    "kpi": [
+      {
+        "_comment": "8个KPI卡片，每个包含值+趋势+tooltip",
+        "label": "KPI名称",
+        "value": "显示值（如 $25.7B / 7,518亿）",
+        "suffix": "单位后缀（如 B / 亿元）",
+        "change": "涨跌幅（如 ↑ 14% / ↓ 71%）",
+        "change_color": "css class: cr(红) / cg(绿) / ca(紫)",
+        "tooltip": {
+          "title": "英文专业名 + 中文名",
+          "definition": "专业定义（含数据说明）",
+          "plain": "大白话比喻（贴合该公司业务）"
+        }
+      }
+    ]
+  },
+
+  "dim1_business": {
+    "_comment": "DIM1 商业模式",
+    "subtitle": "营收结构 · 业务线贡献",
+    "pie": {
+      "labels": ["业务线名称数组"],
+      "data": ["金额数组（与labels等长）"],
+      "_validate": "sum(data) ≈ 总营收（允许2%舍入误差）"
+    },
+    "stack": {
+      "datasets": [
+        { "label": "业务线名", "data": ["5年数据"], "bg_color": "rgba渐变" }
+      ],
+      "_validate": "每年各业务线sum ≈ 该年营收"
+    },
+    "sankey": {
+      "_rule": "只放有数据的节点，flex:0的不放",
+      "left": [{ "id": "skL0", "label": "收入来源", "value": "金额", "pct": "占比", "flex": "CSS flex值(按比例)", "color": "渐变色" }],
+      "mid": [{ "id": "skM0", "label": "业务线", "value": "金额", "pct": "占比", "flex": "按比例", "color": "渐变色" }],
+      "right": [{ "id": "skR0", "label": "去向", "value": "金额", "pct": "占比", "flex": "按比例", "color": "渐变色" }],
+      "links_left_mid": [["fromId", "toId", "rgba颜色", "线宽(px)"]],
+      "links_mid_right": [["fromId", "toId", "rgba颜色", "线宽(px)"]]
+    },
+    "agent_comment": "巴菲特 Agent 商业模式评语（基于真实数据）"
+  },
+
+  "dim2_growth": {
+    "_comment": "DIM2 增长质量",
+    "revenue_trend": ["5年营收数组"],
+    "profit_trend": ["5年净利润数组"],
+    "gross_margin_trend": ["5年毛利率%数组"],
+    "chart_rev_profit": {
+      "y_max": "自动计算: ceil(max(revenue) * 1.15)",
+      "unit_callback": "tooltip显示单位"
+    },
+    "chart_gross": {
+      "y_min": "floor(min(gross_margin) * 0.85)",
+      "y_max": "ceil(max(gross_margin) * 1.15)"
+    },
+    "subtitle_growth": "营收vs净利润副标题",
+    "subtitle_gross": "毛利率趋势副标题（如 价格战后触底回升）",
+    "agent_comment": "格雷厄姆 Agent 增长评语"
+  },
+
+  "dim3_competition": {
+    "_comment": "DIM3 竞争力",
+    "roe_trend": ["5年ROE%数组"],
+    "net_margin_trend": ["5年净利率%数组"],
+    "op_margin_trend": ["5年经营利润率%数组"],
+    "gross_for_compare": ["5年毛利率%数组（与dim2相同）"],
+    "chart_roe": {
+      "y_min": "floor(min(roe) * 0.85)",
+      "y_max": "ceil(max(roe) * 1.15)"
+    },
+    "chart_margins": {
+      "y_min": "floor(min(所有margin) * 0.85)",
+      "y_max": "ceil(max(所有margin) * 1.15)"
+    },
+    "subtitle_roe": "ROE副标题",
+    "subtitle_margins": "利润率副标题",
+    "margin_labels": {
+      "line1": "第一条线名称（默认'毛利率'）",
+      "line2": "第二条线名称（默认'净利率'）",
+      "line3": "第三条线名称（默认'经营利润率'）",
+      "_note": "如果公司用Non-IFRS，这里标注 净利率(Non-IFRS)"
+    },
+    "dupont": {
+      "net_margin": "净利率%（如 34.6%）",
+      "turnover": "资产周转率（如 0.37x）",
+      "leverage": "权益乘数（如 1.77x）",
+      "_validate": "net_margin/100 × turnover × leverage ≈ ROE/100（允许2%误差）"
+    },
+    "per_capita": {
+      "revenue_per_head": "人均创收（如 $18.4万/年）",
+      "headcount": "员工人数（如 140,000人）"
+    },
+    "agent_comment": "芒格 Agent 竞争力评语"
+  },
+
+  "dim4_moat": {
+    "_comment": "DIM4 护城河 — 维度名称根据行业调整",
+    "dimensions": [
+      {
+        "name": "维度名（如 品牌力/规模制造/充电网络）",
+        "stars": "1-5星评分",
+        "star_class": "tg-gn(4-5星) / tg-am(3星) / tg-rd(1-2星)",
+        "tooltip": {
+          "title": "英文专业名（必须与name语义一致！）",
+          "def": "专业定义",
+          "plain": "大白话（贴合该公司业务）"
+        }
+      }
+    ],
+    "radar_data": ["5个数值，对应dimensions顺序"],
+    "radar_labels": ["5个标签，对应dimensions名称"],
+    "competitors": [
+      {
+        "name": "竞品名",
+        "data": ["5维度评分"],
+        "color_bg": "rgba背景色",
+        "color_border": "rgba边框色"
+      }
+    ],
+    "agent_comment": "巴菲特 Agent 护城河评语"
+  },
+
+  "dim5_cashflow": {
+    "_comment": "DIM5 现金流",
+    "funnel": [
+      {
+        "label": "层级名（营收/毛利/Op Income/Net Income/FCF）",
+        "value": "金额显示值",
+        "pct": "占营收百分比",
+        "_validate": "层级递减：营收 > 毛利 > 经营利润（通常） > 净利润"
+      }
+    ],
+    "kpi_tags": [
+      { "label": "FCF金额+增速", "class": "tg-gn" },
+      { "label": "净现比/FCF Margin", "class": "tg-gn" },
+      { "label": "CapEx", "class": "tg-am" }
+    ],
+    "chart_type": "cash_ratio 或 fcf_margin（根据适用性选择）",
+    "_chart_type_rule": "如果净利润有大额一次性项导致净现比异常波动(>2x)，用fcf_margin",
+    "cash_ratio_or_fcf_margin_trend": ["5年数据"],
+    "chart_cash": {
+      "y_min": "根据数据自动计算",
+      "y_max": "根据数据自动计算",
+      "baseline": "合格线（净现比=1.0 / FCF Margin=5%）"
+    },
+    "profit_vs_fcf": {
+      "profit": ["5年净利润"],
+      "fcf": ["5年FCF"],
+      "_validate": "与dim2的profit_trend一致"
+    },
+    "agent_comment": "格雷厄姆 Agent 现金流评语"
+  },
+
+  "dim6_balance": {
+    "_comment": "DIM6 资产负债表",
+    "kpi_cards": {
+      "total_assets": "总资产显示值（如 $122.1B）",
+      "debt_ratio": "负债率%（如 38.7%）",
+      "net_cash": "净现金 = 现金 - 有息负债"
+    },
+    "treemap": {
+      "_rule": "所有数据必须来自资产负债表原文",
+      "total_assets_label": "总资产 · $XX",
+      "asset_items": [
+        { "label": "科目名", "value": "金额", "pct": "占总资产%", "flex": "CSS flex比例" }
+      ],
+      "total_liab_label": "总负债 · $XX",
+      "current_liab": { "value": "金额", "pct": "占总负债%" },
+      "non_current_liab": { "value": "金额", "pct": "占总负债%" },
+      "equity_label": "股东权益 · $XX",
+      "equity_parent": { "value": "金额", "pct": "占总权益%" },
+      "equity_minority": { "value": "金额", "pct": "占总权益%" },
+      "_validate": "总资产 = 总负债 + 股东权益（允许1%舍入）"
+    },
+    "debt_ratio_trend": ["5年负债率%数组"],
+    "chart_debt": { "y_min": "自动", "y_max": "自动" },
+    "total_assets_trend": ["5年总资产数组"],
+    "total_liab_trend": ["5年总负债数组"],
+    "chart_balance": { "y_max": "自动", "unit_label": "图表单位如 $B / 万亿" },
+    "agent_comment": "格雷厄姆 Agent 资产负债评语"
+  },
+
+  "dim7_management": {
+    "_comment": "DIM7 管理层",
+    "positive_signals": ["正面信号1", "正面信号2（2-4条）"],
+    "concern_signals": ["关注事项1", "关注事项2（2-4条）"],
+    "cap_alloc": {
+      "labels": ["资本配置项目名称"],
+      "data": ["对应金额"]
+    },
+    "shareholder_return": {
+      "dividends": ["5年分红数据（无分红填0）"],
+      "buybacks": ["5年回购数据（无回购填0）"],
+      "_note": "如果公司从不分红也不回购，可以把这个图换成其他更有意义的"
+    },
+    "agent_comment": "费雪 Agent 管理层评语"
+  },
+
+  "dim8_risk": {
+    "_comment": "DIM8 风险 — 因子名称根据公司实际风险调整",
+    "total_score": "0-100综合风险分",
+    "total_level": "低风险(<30) / 中等风险(30-60) / 高风险(>60)",
+    "total_color": {
+      "_rule": "<30 → --gnl背景+--gn文字 / 30-60 → --aml+--am / >60 → --rdl+--rd"
+    },
+    "factors": [
+      {
+        "name": "因子名（如 竞争加剧/Robotaxi延期/估值泡沫）",
+        "score": "0-100分",
+        "level": "高(>60)/中(30-60)/低(<30)",
+        "tag_class": "tg-rd(高) / tg-am(中) / tg-gn(低)",
+        "tooltip": {
+          "title": "英文名（必须与name语义一致！）",
+          "def": "专业解释",
+          "plain": "大白话"
+        }
+      }
+    ],
+    "_validate": "hover标签数量 = 条形图因子数量 = factors.length",
+    "agent_comment": "风控 Agent 评语"
+  },
+
+  "overall": {
+    "_comment": "综合评定",
+    "scores": [
+      {
+        "dim": "维度名（如 钱从哪来）",
+        "grade": "评分等级（如 A+ / B / C+）",
+        "grade_class": "gd-a(A系列绿) / gd-b(B系列橙) / gd-c(C系列红)",
+        "note": "一句话说明",
+        "_validate": "grade_class 必须与 grade 首字母匹配"
+      }
+    ],
+    "radar_data": ["8个维度分数(0-100)"],
+    "radar_labels": ["8个维度标签"],
+    "bar_labels": ["按分数降序排列的标签"],
+    "bar_data": ["按分数降序排列的数据"]
+  },
+
+  "verdict": {
+    "_comment": "终章：投资建议",
+    "rating": "综合评级（如 Buy / Hold / Underperform）",
+    "rating_sentiment": "一词概括（如 谨慎乐观 / 强烈推荐）",
+    "target_range": "目标价区间（如 $190-$300）",
+    "summary": "评级说明HTML（2-3句）",
+    "valuation": {
+      "dcf": { "assumptions_html": "假设说明", "low": 190, "high": 280, "unit": "USD / 股" },
+      "comps": { "peers_html": "对标说明", "low": 200, "high": 260, "unit": "USD / 股" },
+      "sotp": { "breakdown_html": "分部说明", "low": 210, "high": 300, "unit": "USD / 股" }
+    },
+    "thermometer": {
+      "current_label": "当前价位标签（含PE）",
+      "current_position_pct": "0-100%位置",
+      "current_color": "指针颜色（高估用--rd，低估用--gn）",
+      "target_label": "目标价标签",
+      "target_position_pct": "0-100%位置",
+      "_validate": "位置必须与PE估值逻辑一致"
+    },
+    "buffett_checklist": {
+      "items": [
+        { "icon": "✅/⚠️/❌", "text": "判定内容（必须基于真实数据）" }
+      ]
+    },
+    "brokers": [
+      { "name": "券商名", "rating": "评级", "rating_class": "gd-a/gd-b/gd-c", "target": "目标价", "logic": "核心逻辑" }
+    ],
+    "strategies": {
+      "conservative": { "advice": "", "position": "", "horizon": "", "stop_loss": "" },
+      "moderate": { "advice": "", "position": "", "horizon": "", "target": "" },
+      "aggressive": { "advice": "", "position": "", "horizon": "", "catalyst": "" }
+    },
+    "catalysts": ["上行催化剂（3-5条，基于公司实际业务）"],
+    "risks": ["下行风险（3-5条，基于公司实际风险）"],
+    "masters": [
+      {
+        "name": "大师名",
+        "emoji": "🧓",
+        "color": "css颜色变量",
+        "quote": "判词HTML（必须基于数据，不能套模板）"
+      }
+    ],
+    "pe_compare": {
+      "labels": ["6家公司名称"],
+      "data": ["6个PE值"],
+      "highlight_index": "目标公司在数组中的位置"
+    },
+    "valuation_range_chart": {
+      "labels": ["DCF/Comps/SOTP/综合"],
+      "bases": ["区间下限"],
+      "ranges": ["区间宽度"],
+      "x_min": "自动",
+      "x_max": "自动",
+      "unit": "USD/HKD/CNY"
+    }
+  },
+
+  "market_voices": [
+    {
+      "source": "来源 · 日期",
+      "text": "内容HTML",
+      "link": "URL",
+      "link_text": "链接文字",
+      "full_width": "是否全宽(最后一条通常true)"
+    }
+  ]
+}
