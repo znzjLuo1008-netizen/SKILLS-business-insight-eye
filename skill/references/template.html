@@ -202,7 +202,7 @@ body{font-family:Inter,'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-seri
 .term:hover{color:var(--ac)}
 .term-tip{display:none;opacity:0;position:fixed;width:320px;max-width:90vw;background:var(--wh);border:1px solid var(--b);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shl);z-index:9999;pointer-events:none;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;text-align:left;font-weight:400}
 .term-tip *{display:block}
-.term:hover .term-tip{display:block;opacity:1;pointer-events:auto}
+.term:hover .term-tip,.term.active .term-tip{display:block;opacity:1;pointer-events:auto}
 .term-tip .tp-pro{font-size:.73rem;font-weight:700;color:var(--ac);margin-bottom:8px;display:flex;align-items:center;gap:5px}
 .term-tip .tp-pro::before{content:'📖';font-size:.72rem}
 .term-tip .tp-def{font-size:.76rem;color:var(--t);line-height:1.65;margin-bottom:10px;font-weight:400}
@@ -329,6 +329,13 @@ body{font-family:Inter,'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-seri
   #investment-advice .sec-b>div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
   #investment-advice table{font-size:.64rem}
   #investment-advice table th,#investment-advice table td{padding:5px 6px}
+  /* DIM8 Risk summary mobile */
+  .sec-b>div[style*="display:flex"][style*="gap:12px"]{flex-direction:column!important;gap:8px!important}
+  .sec-b>div[style*="display:flex"][style*="gap:6px"]{flex-wrap:wrap!important;justify-content:flex-start!important}
+  /* Prevent horizontal overflow */
+  html,body{overflow-x:hidden!important}
+  *{max-width:100vw}
+  .wrap{overflow-x:hidden}
 }
 
 /* Extra small phones */
@@ -1303,6 +1310,38 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 
   setTimeout(drawSankey,300);
   window.addEventListener('resize',function(){setTimeout(drawSankey,100);});
+})();
+
+// Mobile: tap to toggle term tooltips
+(function(){
+  var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if(!isTouchDevice) return;
+  document.addEventListener('click', function(e){
+    var term = e.target.closest('.term');
+    document.querySelectorAll('.term.active').forEach(function(el){
+      if(el !== term) el.classList.remove('active');
+    });
+    if(term){
+      e.preventDefault();
+      e.stopPropagation();
+      term.classList.toggle('active');
+      var tip = term.querySelector('.term-tip');
+      if(tip && term.classList.contains('active')){
+        requestAnimationFrame(function(){
+          var r = term.getBoundingClientRect();
+          var tw = tip.offsetWidth || 320;
+          var th = tip.offsetHeight || 200;
+          var left = r.left + r.width/2 - tw/2;
+          var top = r.bottom + 10;
+          if(top + th > window.innerHeight) top = r.top - th - 10;
+          if(left < 8) left = 8;
+          if(left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+          tip.style.left = left + 'px';
+          tip.style.top = top + 'px';
+        });
+      }
+    }
+  });
 })();
 
 // Auto-position term tooltips — use fixed positioning to prevent overflow

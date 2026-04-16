@@ -202,7 +202,7 @@ body{font-family:Inter,'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-seri
 .term:hover{color:var(--ac)}
 .term-tip{display:none;opacity:0;position:fixed;width:320px;max-width:90vw;background:var(--wh);border:1px solid var(--b);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shl);z-index:9999;pointer-events:none;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;text-align:left;font-weight:400}
 .term-tip *{display:block}
-.term:hover .term-tip{display:block;opacity:1;pointer-events:auto}
+.term:hover .term-tip,.term.active .term-tip{display:block;opacity:1;pointer-events:auto}
 .term-tip .tp-pro{font-size:.73rem;font-weight:700;color:var(--ac);margin-bottom:8px;display:flex;align-items:center;gap:5px}
 .term-tip .tp-pro::before{content:'📖';font-size:.72rem}
 .term-tip .tp-def{font-size:.76rem;color:var(--t);line-height:1.65;margin-bottom:10px;font-weight:400}
@@ -329,6 +329,16 @@ body{font-family:Inter,'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-seri
   #investment-advice .sec-b>div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
   #investment-advice table{font-size:.64rem}
   #investment-advice table th,#investment-advice table td{padding:5px 6px}
+  /* DIM8 Risk summary mobile */
+  .sec-b>div[style*="display:flex"][style*="gap:12px"]{flex-direction:column!important;gap:8px!important}
+  .sec-b>div[style*="display:flex"][style*="gap:6px"]{flex-wrap:wrap!important;justify-content:flex-start!important}
+  /* Prevent horizontal overflow */
+  html,body{overflow-x:hidden!important}
+  *{max-width:100vw}
+  .wrap{overflow-x:hidden}
+  .risk-summary{flex-wrap:wrap!important}
+  .risk-score{font-size:1.5rem!important}
+  .risk-tags{flex-basis:100%!important;margin-top:6px}
 }
 
 /* Extra small phones */
@@ -806,13 +816,13 @@ body{font-family:Inter,'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-seri
   <div class="sec-h"><div class="sec-ico" style="background:var(--rdl);color:var(--rd);">8</div><div><div class="sec-t">会不会翻车 — 风险扫描</div><div class="sec-s">竞争 · Robotaxi 执行 · 估值 · 利润率 · 关键人依赖</div></div></div>
   <div class="sec-b">
     <!-- 风险摘要头部 -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px;background:var(--aml);border-radius:var(--r);border:1px solid rgba(255,149,0,.15);">
-      <div style="font-size:2rem;font-weight:900;color:var(--am);letter-spacing:-.04em;line-height:1">52</div>
-      <div style="flex:1">
+    <div class="risk-summary" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px;background:var(--aml);border-radius:var(--r);border:1px solid rgba(255,149,0,.15);">
+      <div class="risk-score" style="font-size:2rem;font-weight:900;color:var(--am);letter-spacing:-.04em;line-height:1">52</div>
+      <div style="flex:1;min-width:0">
         <div style="font-size:.72rem;font-weight:700;color:var(--am)">综合风险评分 52/100 · 中等风险</div>
         <div style="font-size:.62rem;color:var(--t2);margin-top:2px">加权评估 6 项风险因子，0=安全 100=危险</div>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+      <div class="risk-tags" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
         <span class="tg tg-rd" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">高 · 竞争加剧<span class="term-tip"><div class="tp-pro">Competitive Intensity Risk</div><div class="tp-def">全球新能源车市场竞争白热化——BYD、小米等中国品牌快速崛起，价格战蔓延，Tesla 市场份额面临持续挤压。</div><div class="tp-ez">简单说：对手越来越多、越来越强，价格战打得厉害，Tesla 以前独占市场的好日子过去了。</div></span></span></span>
         <span class="tg tg-am" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">高 · Robotaxi<span class="term-tip"><div class="tp-pro">Robotaxi Execution Risk</div><div class="tp-def">Elon Musk 承诺 2026 年 6 月 Robotaxi 落地，但<b>监管审批、技术成熟度和商业模式验证</b>均存在重大不确定性。此前 Robotaxi 已多次延期，市场信任度打折。</div><div class="tp-ez">马斯克说 Robotaxi 明年上路——但他以前也这么说过好几次都跳票了。这次能不能兑现直接决定 Tesla 股价走向。</div></span></span></span>
         <span class="tg tg-am" style="position:relative;cursor:help"><span class="term" style="color:inherit;font-weight:inherit;border-color:currentColor">中 · 估值泡沫<span class="term-tip"><div class="tp-pro">Valuation Bubble Risk</div><div class="tp-def">Tesla 当前 P/E ~162x，远超传统车企（Toyota ~10x）和科技巨头（Meta ~25x）。股价已包含 FSD/Robotaxi 的<b>极度乐观预期</b>，一旦进展不及预期，估值面临大幅回调。</div><div class="tp-ez">162 倍市盈率意味着——按现在的利润不吃不喝要赚 162 年才回本。股价已经把未来 5-10 年的美好故事都提前算进去了，万一故事打折，跌幅会很惨。</div></span></span></span>
@@ -1307,6 +1317,40 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 
   setTimeout(drawSankey,300);
   window.addEventListener('resize',function(){setTimeout(drawSankey,100);});
+})();
+
+// Mobile: tap to toggle term tooltips
+(function(){
+  var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if(!isTouchDevice) return;
+  document.addEventListener('click', function(e){
+    var term = e.target.closest('.term');
+    // Close all other active terms
+    document.querySelectorAll('.term.active').forEach(function(el){
+      if(el !== term) el.classList.remove('active');
+    });
+    if(term){
+      e.preventDefault();
+      e.stopPropagation();
+      term.classList.toggle('active');
+      // Position the tooltip
+      var tip = term.querySelector('.term-tip');
+      if(tip && term.classList.contains('active')){
+        requestAnimationFrame(function(){
+          var r = term.getBoundingClientRect();
+          var tw = tip.offsetWidth || 320;
+          var th = tip.offsetHeight || 200;
+          var left = r.left + r.width/2 - tw/2;
+          var top = r.bottom + 10;
+          if(top + th > window.innerHeight) top = r.top - th - 10;
+          if(left < 8) left = 8;
+          if(left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+          tip.style.left = left + 'px';
+          tip.style.top = top + 'px';
+        });
+      }
+    }
+  });
 })();
 
 // Auto-position term tooltips — use fixed positioning to prevent overflow
